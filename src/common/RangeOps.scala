@@ -3,7 +3,7 @@ package common
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.util.OverloadHack
+import scala.lms.util.OverloadHack
 import scala.virtualization.lms.internal.{GenericNestedCodegen, GenerationFailedException}
 import org.scala_lang.virtualized.SourceContext
 

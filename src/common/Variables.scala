@@ -2,8 +2,7 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import org.scala_lang.virtualized.SourceContext
-import scala.virtualization.lms.util.OverloadHack
+import util.OverloadHack
 import org.scala_lang.virtualized.SourceContext
 
 trait LiftVariables extends Base {
