@@ -2,9 +2,9 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.reflect.SourceContext
-import scala.lms.util.OverloadHack
-import scala.reflect.SourceContext
+import org.scala_lang.virtualized.SourceContext
+import scala.virtualization.lms.util.OverloadHack
+import org.scala_lang.virtualized.SourceContext
 
 trait LiftVariables extends Base {
   this: Variables =>
@@ -80,6 +80,22 @@ trait Variables extends Base with OverloadHack with VariableImplicits with ReadV
   def infix_/=[T](lhs: Var[T], rhs: T)(implicit o: Overloaded1, mT: Typ[T], pos: SourceContext) = var_divideequals(lhs, unit(rhs))
   def infix_/=[T](lhs: Var[T], rhs: Rep[T])(implicit o: Overloaded2, mT: Typ[T], pos: SourceContext) = var_divideequals(lhs,rhs)
   def infix_/=[T](lhs: Var[T], rhs: Var[T])(implicit o: Overloaded3, mT: Typ[T], pos: SourceContext) = var_divideequals(lhs,readVar(rhs))
+// =======
+//   implicit class OpsInfixVarT[T](lhs: Var[T]) {
+//     def +=[T](rhs: T)(implicit o: Overloaded1, mT: Manifest[T], pos: SourceContext) = var_plusequals(lhs, unit(rhs))
+//     def +=[T](rhs: Rep[T])(implicit o: Overloaded2, mT: Manifest[T], pos: SourceContext) = var_plusequals(lhs,rhs)
+//     def +=[T](rhs: Var[T])(implicit o: Overloaded3, mT: Manifest[T], pos: SourceContext) = var_plusequals(lhs,readVar(rhs))
+//     def -=[T](rhs: T)(implicit o: Overloaded1, mT: Manifest[T], pos: SourceContext) = var_minusequals(lhs, unit(rhs))
+//     def -=[T](rhs: Rep[T])(implicit o: Overloaded2, mT: Manifest[T], pos: SourceContext) = var_minusequals(lhs,rhs)
+//     def -=[T](rhs: Var[T])(implicit o: Overloaded3, mT: Manifest[T], pos: SourceContext) = var_minusequals(lhs,readVar(rhs))
+//     def *=[T](rhs: T)(implicit o: Overloaded1, mT: Manifest[T], pos: SourceContext) = var_timesequals(lhs, unit(rhs))
+//     def *=[T](rhs: Rep[T])(implicit o: Overloaded2, mT: Manifest[T], pos: SourceContext) = var_timesequals(lhs,rhs)
+//     def *=[T](rhs: Var[T])(implicit o: Overloaded3, mT: Manifest[T], pos: SourceContext) = var_timesequals(lhs,readVar(rhs))
+//     def /=[T](rhs: T)(implicit o: Overloaded1, mT: Manifest[T], pos: SourceContext) = var_divideequals(lhs, unit(rhs))
+//     def /=[T](rhs: Rep[T])(implicit o: Overloaded2, mT: Manifest[T], pos: SourceContext) = var_divideequals(lhs,rhs)
+//     def /=[T](rhs: Var[T])(implicit o: Overloaded3, mT: Manifest[T], pos: SourceContext) = var_divideequals(lhs,readVar(rhs))
+//   }
+// >>>>>>> macro-trans
 }
 
 trait VariablesExp extends Variables with PrimitiveOps with ImplicitOpsExp with VariableImplicits with ReadVarImplicitExp {

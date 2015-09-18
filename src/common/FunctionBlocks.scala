@@ -2,9 +2,9 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.reflect.SourceContext
-import scala.lms.internal.{Blocks, Effects, AbstractTransformer}
-import scala.lms.util.OverloadHack
+import org.scala_lang.virtualized.SourceContext
+import scala.virtualization.lms.internal.{Blocks, Effects, AbstractTransformer}
+import scala.virtualization.lms.util.OverloadHack
 
 /*
  * This trait allows functions to be stored as case class parameters in a way that works correctly

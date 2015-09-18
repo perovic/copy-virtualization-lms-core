@@ -2,8 +2,8 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.reflect.SourceContext
-import scala.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFailedException}
+import org.scala_lang.virtualized.SourceContext
+import scala.virtualization.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFailedException}
 
 
 trait SplitEffectsExpFat extends IfThenElseFatExp with WhileExp with PreviousIterationDummyExp { thisIR: BooleanOpsExp with EqualExpBridge =>
@@ -64,8 +64,12 @@ trait SplitEffectsExpFat extends IfThenElseFatExp with WhileExp with PreviousIte
             TP(s1, Reflect(PreviousIteration(k),u,es:+loopSym))
           case t => t
         }
-        (thisIR: EmbeddedControls).__assign(globalDefs, globalDefs map xform) // FIXME: SI-6100
-        (thisIR: EmbeddedControls).__assign(localDefs, localDefs map xform) // FIXME: SI-6100
+// <<<<<< HEAD
+//         (thisIR: EmbeddedControls).__assign(globalDefs, globalDefs map xform) // FIXME: SI-6100
+//         (thisIR: EmbeddedControls).__assign(localDefs, localDefs map xform) // FIXME: SI-6100
+// =======
+        globalDefs = globalDefs map xform
+        localDefs = localDefs map xform
       }
 
       if (u.maySimple)

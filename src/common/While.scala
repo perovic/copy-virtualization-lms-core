@@ -2,8 +2,9 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.lms.internal.GenericNestedCodegen
-import scala.reflect.SourceContext
+import scala.virtualization.lms.internal.GenericNestedCodegen
+import org.scala_lang.virtualized.SourceContext
+
 
 trait While extends Base {
   def __whileDo(cond: => Rep[Boolean], body: => Rep[Unit])(implicit pos: SourceContext): Rep[Unit]

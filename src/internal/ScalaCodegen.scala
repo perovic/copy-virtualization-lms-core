@@ -3,7 +3,7 @@ package internal
 
 import java.io.{File, FileWriter, PrintWriter}
 
-import scala.reflect.SourceContext
+import org.scala_lang.virtualized.SourceContext
 
 trait ScalaCodegen extends GenericCodegen with Config {
   val IR: Expressions

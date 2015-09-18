@@ -2,8 +2,8 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.reflect.SourceContext
-import scala.lms.internal.{FatBlockTraversal,GenericNestedCodegen,GenericFatCodegen}
+import org.scala_lang.virtualized.SourceContext
+import scala.virtualization.lms.internal.{FatBlockTraversal,GenericNestedCodegen,GenericFatCodegen}
 
 trait Loops extends Base { // no surface constructs for now
 

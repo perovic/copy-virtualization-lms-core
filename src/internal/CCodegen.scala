@@ -221,3 +221,4 @@ trait CFatCodegen extends CLikeFatCodegen with CCodegen {
   import IR._
 
 }
+

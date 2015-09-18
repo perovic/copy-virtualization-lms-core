@@ -18,6 +18,8 @@ trait StringOps extends Variables with OverloadHack with PrimitiveOps {
   
   implicit def stringTyp: Typ[String]
 
+
+  // TODO(trans) need to check if string concat works
   def infix_+(s1: String, s2: Rep[Any])(implicit o: Overloaded1, pos: SourceContext) = string_plus(unit(s1), s2)
   def infix_+[T:Typ](s1: String, s2: Var[T])(implicit o: Overloaded2, pos: SourceContext) = string_plus(unit(s1), readVar(s2))
   def infix_+(s1: Rep[String], s2: Rep[Any])(implicit o: Overloaded1, pos: SourceContext) = string_plus(s1, s2)
@@ -59,6 +61,21 @@ trait StringOps extends Variables with OverloadHack with PrimitiveOps {
 
   // FIXME: enabling this causes trouble with DeliteOpSuite. investigate!!
   //def infix_length(s: Rep[String])(implicit pos: SourceContext) = string_length(s)
+// =======
+
+//   implicit class StringOpsInfixRepString(s1: Rep[String]) {
+//     def startsWith(s2: Rep[String])(implicit pos: SourceContext) = string_startswith(s1,s2)
+//     def trim(separators: Rep[String])(implicit pos: SourceContext) = string_split(s1, separators, unit(0))
+//     def split(separators: Rep[String], limit: Rep[Int])(implicit pos: SourceContext) = string_split(s1, separators, limit)
+//     def charAt(i: Rep[Int])(implicit pos: SourceContext) = string_charAt(s1,i)
+//     def endsWith(e: Rep[String])(implicit pos: SourceContext) = string_endsWith(s1,e)
+//     def contains(s2: Rep[String])(implicit pos: SourceContext) = string_contains(s1,s2)
+//     def toDouble(start: Rep[Int], end: Rep[Int])(implicit pos: SourceContext) = string_substring(s1,start,end)
+//     // TODO(trans) check if FIXME still valid
+//     // FIXME: enabling this causes trouble with DeliteOpSuite. investigate!!
+//     def length(s1: Rep[String])(implicit pos: SourceContext) = string_length(s1)
+//   }
+// >>>>>>> macro-trans
 
   object String {
     def valueOf(a: Rep[Any])(implicit pos: SourceContext) = string_valueof(a)

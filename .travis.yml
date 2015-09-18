@@ -4,6 +4,7 @@ sudo: false
 language: scala
 
 scala:
+<<<<<<< HEAD
   - 2.11.2
 
 cache:
@@ -27,3 +28,10 @@ env:
   global:
   - secure: X+7udElsP9vnDvz8zM+0rESZQE5rCin4Iw7S0ZqaIgZth1RM+vdmFpOtV7j/YeBtJnpL1s7z9xWpnAf1PzCESp8JrApvHmxyzXC5yRYki0tf8bb9jWJmkNP8ZRAiwe1uSLwhtGGST6kMjuIBjbTlCoizhqu7/abvwZNUYn37Afs=
   - secure: huTySCqcSt7gBI3I8GTWZDW9wh9aMxqQWl4AwV+jewh0s4jIn++oHUJ5HmKMBOXkkcrA3fxaaI0iwAodBJ/A5nH0Ge1tx0mW1JSYikDbkMNKNvooy0R6qZziACjrJ+7ooxnP/g2g3MrSskGkkZVX7vsH6cgk5Ai4z6FBhXv0DQA=
+=======
+   - 2.11.2
+
+before_install:
+    - git clone https://github.com/scala-lms/summer-of-lms-2014.git
+    - (cd summer-of-lms-2014; git checkout scala-virtualized; sbt publish-local)
+>>>>>>> macro-trans

@@ -2,8 +2,8 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.lms.util.OverloadHack
-import scala.reflect.SourceContext
+import scala.virtualization.lms.util.OverloadHack
+import org.scala_lang.virtualized.SourceContext
 
 trait OrderingOps extends Base with Variables with BooleanOps with PrimitiveOps with OverloadHack {
   // workaround for infix not working with implicits in PrimitiveOps
@@ -200,4 +200,3 @@ trait CLikeGenOrderingOps extends CLikeGenBase {
 trait CudaGenOrderingOps extends CudaGenBase with CLikeGenOrderingOps
 trait OpenCLGenOrderingOps extends OpenCLGenBase with CLikeGenOrderingOps
 trait CGenOrderingOps extends CGenBase with CLikeGenOrderingOps
-

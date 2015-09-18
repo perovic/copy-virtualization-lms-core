@@ -1,7 +1,10 @@
 package scala.lms
 package common
 
-import reflect.{SourceContext, RefinedManifest}
+import org.scala_lang.virtualized.SourceContext
+import org.scala_lang.virtualized.Struct
+import org.scala_lang.virtualized.RefinedManifest
+
 import util.OverloadHack
 import java.io.PrintWriter
 import internal.{GenericNestedCodegen, GenericFatCodegen}

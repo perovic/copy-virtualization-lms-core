@@ -2,7 +2,8 @@ package scala.lms
 package common
 
 import internal._
-import scala.reflect.SourceContext
+import org.scala_lang.virtualized.SourceContext
+import org.scala_lang.virtualized.EmbeddedControls
 
 /**
  * This trait automatically lifts any concrete instance to a representation.

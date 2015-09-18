@@ -3,7 +3,7 @@ package common
 
 import java.io.PrintWriter
 import internal._
-import scala.reflect.SourceContext
+import org.scala_lang.virtualized.SourceContext
 
 trait SeqOps extends Variables {
 
@@ -92,3 +92,4 @@ trait CLikeGenSeqOps extends BaseGenSeqOps with CLikeGenBase  {
 trait CudaGenSeqOps extends CudaGenEffect with CLikeGenSeqOps
 trait OpenCLGenSeqOps extends OpenCLGenEffect with CLikeGenSeqOps
 trait CGenSeqOps extends CGenEffect with CLikeGenSeqOps
+

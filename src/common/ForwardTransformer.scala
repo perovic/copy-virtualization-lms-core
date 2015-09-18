@@ -2,7 +2,7 @@ package scala.lms
 package common
 
 import scala.collection.{immutable,mutable}
-import scala.reflect.SourceContext
+import org.scala_lang.virtualized.SourceContext
 
 trait ForwardTransformer extends internal.AbstractSubstTransformer with internal.FatBlockTraversal { self =>
   val IR: BaseFatExp with EffectExp //LoopsFatExp with IfThenElseFatExp
