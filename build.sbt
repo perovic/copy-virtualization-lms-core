@@ -1,5 +1,5 @@
 // --- project info ---
-name := "macro-LMS"
+name := "macro-lms"
 
 name := "lms-core"
 
