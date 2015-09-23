@@ -7,7 +7,7 @@ import scala.lms.util.OverloadHack
 import scala.lms.internal.{GenericNestedCodegen, GenerationFailedException}
 import org.scala_lang.virtualized.SourceContext
 
-trait RangeOps extends Base with OverloadHack {
+trait RangeOps extends Base with PrimitiveOps with OverloadHack {
   implicit def rangeTyp: Typ[Range]
   // workaround for infix not working with manifests
   implicit def repRangeToRangeOps(r: Rep[Range]) = new rangeOpsCls(r)

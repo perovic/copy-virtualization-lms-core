@@ -201,6 +201,12 @@ trait PrimitiveOps extends Variables with OverloadHack {
     def parseFloat(s: Rep[String])(implicit pos: SourceContext) = obj_float_parse_float(s)
   }
 
+  implicit def floatToFloatOps(r: Rep[Float]): FloatOpsCls = new FloatOpsCls(r)
+
+  class FloatOpsCls(lhs: Rep[Float]){
+    def toDouble(implicit pos: SourceContext) = float_to_double(lhs)
+  }
+
   def infix_toInt(lhs: Rep[Float])(implicit o: Overloaded1, pos: SourceContext): Rep[Int] = float_to_int(lhs)
   def infix_toDouble(lhs: Rep[Float])(implicit o: Overloaded1, pos: SourceContext): Rep[Double] = float_to_double(lhs) 
   

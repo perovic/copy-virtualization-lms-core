@@ -2,7 +2,7 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import org.scala_lang.virtualized.SourceContext
+import org.scala_lang.virtualized.{EmbeddedControls, SourceContext}
 import scala.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFailedException}
 
 
