@@ -11,7 +11,7 @@ trait ObjectOps extends Variables with OverloadHack { //with StringOps
     //def toString = infix_toString(lhs) -- through @virtualize
     def ToString = infix_ToString(lhs)
   }
-  implicit class ObjectOpsInfixGeneric[A:Manifest](lhs: Rep[A]) {
+  implicit class ObjectOpsInfixGeneric[A:Typ](lhs: Rep[A]) {
     def unsafeImmutable = infix_unsafeImmutable(lhs)
     def unsafeMutable = infix_unsafeMutable(lhs)
   }
