@@ -2,7 +2,7 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.virtualization.lms.internal.GenericNestedCodegen
+import scala.lms.internal.GenericNestedCodegen
 import org.scala_lang.virtualized.SourceContext
 
 

@@ -2,7 +2,7 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.virtualization.lms.internal._
+import scala.lms.internal._
 import org.scala_lang.virtualized.SourceContext
 
 trait MiscOps extends Base with PrimitiveOps with StringOps {

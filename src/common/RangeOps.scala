@@ -4,7 +4,7 @@ package common
 import java.io.PrintWriter
 
 import scala.lms.util.OverloadHack
-import scala.virtualization.lms.internal.{GenericNestedCodegen, GenerationFailedException}
+import scala.lms.internal.{GenericNestedCodegen, GenerationFailedException}
 import org.scala_lang.virtualized.SourceContext
 
 trait RangeOps extends Base with OverloadHack {

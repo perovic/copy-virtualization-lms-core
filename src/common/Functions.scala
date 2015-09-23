@@ -2,8 +2,8 @@ package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.virtualization.lms.internal.{GenericNestedCodegen, GenerationFailedException}
-import scala.virtualization.lms.util.ClosureCompare
+import scala.lms.internal.{GenericNestedCodegen, GenerationFailedException}
+import scala.lms.util.ClosureCompare
 import org.scala_lang.virtualized.SourceContext
 
 trait Functions extends Base {
@@ -16,6 +16,7 @@ trait Functions extends Base {
   implicit def toLambdaOps[A:Typ,B:Typ](fun: Rep[A => B]) = new LambdaOps(fun)
 
   class LambdaOps[A:Typ,B:Typ](f: Rep[A => B]) {
+
     def apply(x: Rep[A])(implicit pos: SourceContext): Rep[B] = doApply(f,x)
   }
 

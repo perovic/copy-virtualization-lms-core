@@ -60,9 +60,10 @@ trait GenericCodegen extends BlockTraversal {
   // optional type remapping (default is identity)
   def remap(s: String): String = s
   def remap[A](s: String, method: String, t: Typ[A]) : String = remap(s, method, t.toString)
-  def remap(s: String, method: String, t: String) : String = s + method + "[" + remap(t) + "]"    
-  def remap[A](m: Manifest[A]): String = m match {
-    //1.0.x TODO case ManifestTyp(rm: RefinedManifest[A]) =>  "AnyRef{" + rm.fields.foldLeft(""){(acc, f) => {val (n,mnf) = f; acc + "val " + n + ": " + remap(ManifestTyp(mnf)) + ";"}} + "}"
+  def remap(s: String, method: String, t: String) : String = s + method + "[" + remap(t) + "]"
+  def remap[A](m: Typ[A]): String = m match {
+    //1.0.x TODO
+    // case ManifestTyp(rm: RefinedManifest[A]) =>  "AnyRef{" + rm.fields.foldLeft(""){(acc, f) => {val (n,mnf) = f; acc + "val " + n + ": " + remap(ManifestTyp(mnf)) + ";"}} + "}"
     // TODO(trans)
     //case rm: RefinedManifest[A] =>  "AnyRef{" + rm.fields.foldLeft(""){(acc, f) => {val (n,mnf) = f; acc + "val " + n + ": " + remap(mnf) + ";"}} + "}"
     case _ if m.erasure == classOf[Variable[Any]] =>

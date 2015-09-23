@@ -4,7 +4,7 @@ package common
 import java.io.PrintWriter
 import scala.lms.util.OverloadHack
 import scala.lms.internal.{GenerationFailedException}
-import scala.reflect.SourceContext
+import org.scala_lang.virtualized.SourceContext
 
 trait LiftString {
   this: StringOps =>

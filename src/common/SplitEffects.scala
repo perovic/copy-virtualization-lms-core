@@ -3,7 +3,7 @@ package common
 
 import java.io.PrintWriter
 import org.scala_lang.virtualized.SourceContext
-import scala.virtualization.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFailedException}
+import scala.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFailedException}
 
 
 trait SplitEffectsExpFat extends IfThenElseFatExp with WhileExp with PreviousIterationDummyExp { thisIR: BooleanOpsExp with EqualExpBridge =>

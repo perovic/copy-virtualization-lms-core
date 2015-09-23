@@ -3,7 +3,7 @@ package common
 
 import java.io.PrintWriter
 import org.scala_lang.virtualized.SourceContext
-import scala.virtualization.lms.internal.{Blocks, Effects, AbstractTransformer}
+import scala.lms.internal.{Blocks, Effects, AbstractTransformer}
 import scala.lms.util.OverloadHack
 
 /*
