@@ -4,10 +4,7 @@ package test1
 
 import common._
 
-trait Trig extends Base {
-
-  //todo removed
-  //implicit def unit(x: Double): Rep[Double]
+trait Trig extends Base { //TODO(trans) extends Arith?
 
   def sin(x: Rep[Double]): Rep[Double]
   def cos(x: Rep[Double]): Rep[Double]
@@ -35,6 +32,4 @@ trait TrigExpOpt extends TrigExp {
     case Const(x) => unit(math.cos(x))
     case _ => super.cos(x)
   }
-
 }
-

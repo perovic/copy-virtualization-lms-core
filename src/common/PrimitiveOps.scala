@@ -12,6 +12,7 @@ trait LiftPrimitives {
   implicit def intToRepInt(x: Int) = unit(x)  
   implicit def floatToRepFloat(x: Float) = unit(x)
   implicit def doubleToRepDouble(x: Double) = unit(x)
+  // implicit def numericToRep[T:Numeric:Typ](x: T) = unit(x) //more generic...
   
   // precision-widening promotions
   implicit def chainIntToRepFloat[A:Typ](x: A)(implicit c: A => Rep[Int]): Rep[Float] = repIntToRepFloat(c(x))
@@ -25,7 +26,7 @@ trait LiftPrimitives {
  * Scala's type hierarchy to reduce the amount of IR nodes or code generation require.
  * It is in semi-desperate need of a refactor.
  */
-trait PrimitiveOps extends Variables with OverloadHack { 
+trait PrimitiveOps extends Variables with OverloadHack { //why not extends Base?
   this: ImplicitOps =>
 
   implicit def byteTyp: Typ[Byte]
@@ -179,6 +180,10 @@ trait PrimitiveOps extends Variables with OverloadHack {
     def floatValue()(implicit pos: SourceContext) = double_float_value(lhs)
     def toInt(implicit pos: SourceContext) = double_to_int(lhs)
     def toFloat(implicit pos: SourceContext) = double_to_float(lhs)
+    def +(rhs: Rep[Double])(implicit pos: SourceContext) = double_plus(lhs, rhs)
+    def -(rhs: Rep[Double])(implicit pos: SourceContext) = double_minus(lhs, rhs)
+    def *(rhs: Rep[Double])(implicit pos: SourceContext) = double_times(lhs, rhs)
+    def /(rhs: Rep[Double])(implicit pos: SourceContext) = double_divide(lhs, rhs)
   }
 
   def obj_double_parse_double(s: Rep[String])(implicit pos: SourceContext): Rep[Double]

@@ -11,8 +11,8 @@ import java.io.PrintWriter
 import org.scalatest._
 
 
-trait FFT { this: Arith with Trig =>
-  
+trait FFT extends Arith { this: Trig =>
+
   def omega(k: Int, N: Int): Complex = {
     val kth = -2.0 * k * math.Pi / N
     Complex(cos(kth), sin(kth))
@@ -56,11 +56,11 @@ trait FFT { this: Arith with Trig =>
 
 }
 
+trait FFTExp extends FFT with ArithExp with TrigExp with VariablesExp
 
+trait FFTExpOpt extends FFTExp with ArithOpsExpOptFFT with TrigExpOptFFT with VariablesExpOpt
 
-
-
-trait ArithExpOptFFT extends ArithExpOpt {
+trait ArithOpsExpOptFFT extends ArithExpOpt {
 
   override def infix_+(x: Exp[Double], y: Exp[Double])(implicit pos: SourceContext) = (x, y) match {
     case (x, Def(Minus(Const(0.0) | Const(-0.0), y))) => infix_-(x, y)
@@ -78,8 +78,6 @@ trait ArithExpOptFFT extends ArithExpOpt {
     case _ => super.infix_*(x, y)
   }
 }
-
-
 
 trait TrigExpOptFFT extends TrigExpOpt {
   override def cos(x: Exp[Double]) = x match {
@@ -107,15 +105,13 @@ trait ScalaGenFlat extends ScalaGenBase {
    }
 }
 
-
-
 class TestFFT extends FileDiffSuite {
   
   val prefix = home + "test-out/epfl/test2-"
   
   def testFFT1 = {
     withOutFile(prefix+"fft1") {
-      val o = new FFT with ArithExp with TrigExpOpt with FlatResult with DisableCSE //with DisableDCE
+      val o = new FFTExp {}//with internal.Expressions//new FFT with ArithExp with TrigExpOpt with FlatResult with DisableCSE with PrimitiveOpsExp //with DisableDCE
       import o._
 
       val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
@@ -131,7 +127,7 @@ class TestFFT extends FileDiffSuite {
 
   def testFFT2 = {
     withOutFile(prefix+"fft2") {
-      val o = new FFT with ArithExpOptFFT with TrigExpOptFFT with FlatResult
+      val o = new FFTExpOpt {} // with ArithOpsExpOptFFT with TrigExpOptFFT with FlatResult
       import o._
 
       val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
@@ -170,5 +166,4 @@ class TestFFT extends FileDiffSuite {
     }
     assertFileEqualsCheck(prefix+"fft3")
   }
-  
 }
