@@ -90,9 +90,9 @@ trait TrigExpOptFFT extends TrigExpOpt {
 trait FlatResult extends BaseExp { // just to make dot output nicer
 
   case class Result[T](x: Any) extends Def[T]
-  
+
   def result[T:Typ](x: Any): Exp[T] = toAtom(Result[T](x))
-  
+
 }
 
 trait ScalaGenFlat extends ScalaGenBase {
@@ -106,9 +106,9 @@ trait ScalaGenFlat extends ScalaGenBase {
 }
 
 class TestFFT extends FileDiffSuite {
-  
+
   val prefix = home + "test-out/epfl/test2-"
-  
+
   def testFFT1 = {
     withOutFile(prefix+"fft1") {
       //val o = new FFTExp with FlatResult with DisableCSE
@@ -118,7 +118,7 @@ class TestFFT extends FileDiffSuite {
       val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
       println(globalDefs.mkString("\n"))
       println(r)
-      
+
       val p = new ExportGraph with DisableDCE { val IR: o.type = o }
       p.emitDepGraph(result[Unit](r), prefix+"fft1-dot", true)
     }
@@ -126,46 +126,46 @@ class TestFFT extends FileDiffSuite {
     assertFileEqualsCheck(prefix+"fft1-dot")
   }
 
-  def testFFT2 = {
-    withOutFile(prefix+"fft2") {
-      //val o = new FFTExpOpt with FlatResult // with ArithOpsExpOptFFT  with TrigExpOptFFT
-      val o = new FFT with ArithOpsExpOptFFT with TrigExpOptFFT with FlatResult with VariablesExpOpt
-      import o._
-
-      val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
-      println(globalDefs.mkString("\n"))
-      println(r)
-
-      val p = new ExportGraph { val IR: o.type = o }
-      p.emitDepGraph(result[Unit](r), prefix+"fft2-dot", true)
-    }
-    assertFileEqualsCheck(prefix+"fft2")
-    assertFileEqualsCheck(prefix+"fft2-dot")
-  }
-
-  def testFFT3 = {
-    withOutFile(prefix+"fft3") {
-      class FooBar extends FFTExpOpt with ArraysExp with CompileScala {
-
-        def ffts(input: Rep[Array[Double]], size: Int) = {
-          val list = List.tabulate(size)(i => Complex(input(2*i), input(2*i+1)))
-          val r = fft(list)
-          // make a new array for now - doing in-place update would be better
-          makeArray(r.flatMap { case Complex(re,im) => List(re,im) })
-        }
-
-        val codegen = new ScalaGenFlat with ScalaGenArith with ScalaGenPrimitiveOps with ScalaGenArrays {
-          val IR: FooBar.this.type = FooBar.this // TODO: find a better way...
-        }
-      }
-      val o = new FooBar
-      import o._
-
-      val fft4 = (input: Rep[Array[Double]]) => ffts(input, 4)
-      codegen.emitSource(fft4, "FFT4", new PrintWriter(System.out))
-      val fft4c = compile(fft4)
-      println(fft4c(Array(1.0,0.0, 1.0,0.0, 2.0,0.0, 2.0,0.0, 1.0,0.0, 1.0,0.0, 0.0,0.0, 0.0,0.0)).mkString(","))
-    }
-    assertFileEqualsCheck(prefix+"fft3")
-  }
+//  def testFFT2 = {
+//    withOutFile(prefix+"fft2") {
+//      //val o = new FFTExpOpt with FlatResult // with ArithOpsExpOptFFT  with TrigExpOptFFT
+//      val o = new FFT with ArithOpsExpOptFFT with TrigExpOptFFT with FlatResult with VariablesExpOpt
+//      import o._
+//
+//      val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
+//      println(globalDefs.mkString("\n"))
+//      println(r)
+//
+//      val p = new ExportGraph { val IR: o.type = o }
+//      p.emitDepGraph(result[Unit](r), prefix+"fft2-dot", true)
+//    }
+//    assertFileEqualsCheck(prefix+"fft2")
+//    assertFileEqualsCheck(prefix+"fft2-dot")
+//  }
+//
+//  def testFFT3 = {
+//    withOutFile(prefix+"fft3") {
+//      class FooBar extends FFTExpOpt with ArraysExp with CompileScala {
+//
+//        def ffts(input: Rep[Array[Double]], size: Int) = {
+//          val list = List.tabulate(size)(i => Complex(input(2*i), input(2*i+1)))
+//          val r = fft(list)
+//          // make a new array for now - doing in-place update would be better
+//          makeArray(r.flatMap { case Complex(re,im) => List(re,im) })
+//        }
+//
+//        val codegen = new ScalaGenFlat with ScalaGenArith with ScalaGenPrimitiveOps with ScalaGenArrays {
+//          val IR: FooBar.this.type = FooBar.this // TODO: find a better way...
+//        }
+//      }
+//      val o = new FooBar
+//      import o._
+//
+//      val fft4 = (input: Rep[Array[Double]]) => ffts(input, 4)
+//      codegen.emitSource(fft4, "FFT4", new PrintWriter(System.out))
+//      val fft4c = compile(fft4)
+//      println(fft4c(Array(1.0,0.0, 1.0,0.0, 2.0,0.0, 2.0,0.0, 1.0,0.0, 1.0,0.0, 0.0,0.0, 0.0,0.0)).mkString(","))
+//    }
+//    assertFileEqualsCheck(prefix+"fft3")
+//  }
 }
