@@ -111,7 +111,8 @@ class TestFFT extends FileDiffSuite {
   
   def testFFT1 = {
     withOutFile(prefix+"fft1") {
-      val o = new FFTExp {}//with internal.Expressions//new FFT with ArithExp with TrigExpOpt with FlatResult with DisableCSE with PrimitiveOpsExp //with DisableDCE
+      //val o = new FFTExp with FlatResult with DisableCSE
+      val o = new FFT with ArithExp with TrigExpOpt with FlatResult with DisableCSE with VariablesExp //with DisableDCE
       import o._
 
       val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
@@ -127,7 +128,8 @@ class TestFFT extends FileDiffSuite {
 
   def testFFT2 = {
     withOutFile(prefix+"fft2") {
-      val o = new FFTExpOpt {} // with ArithOpsExpOptFFT with TrigExpOptFFT with FlatResult
+      //val o = new FFTExpOpt with FlatResult // with ArithOpsExpOptFFT  with TrigExpOptFFT
+      val o = new FFT with ArithOpsExpOptFFT with TrigExpOptFFT with FlatResult with VariablesExpOpt
       import o._
 
       val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
@@ -143,9 +145,7 @@ class TestFFT extends FileDiffSuite {
 
   def testFFT3 = {
     withOutFile(prefix+"fft3") {
-      class FooBar extends FFT
-        with ArithExpOptFFT with TrigExpOptFFT with ArraysExp
-        with CompileScala {
+      class FooBar extends FFTExpOpt with ArraysExp with CompileScala {
 
         def ffts(input: Rep[Array[Double]], size: Int) = {
           val list = List.tabulate(size)(i => Complex(input(2*i), input(2*i+1)))
@@ -153,12 +153,14 @@ class TestFFT extends FileDiffSuite {
           // make a new array for now - doing in-place update would be better
           makeArray(r.flatMap { case Complex(re,im) => List(re,im) })
         }
-        
-        val codegen = new ScalaGenFlat with ScalaGenArith with ScalaGenArrays { val IR: FooBar.this.type = FooBar.this } // TODO: find a better way...
+
+        val codegen = new ScalaGenFlat with ScalaGenArith with ScalaGenPrimitiveOps with ScalaGenArrays {
+          val IR: FooBar.this.type = FooBar.this // TODO: find a better way...
+        }
       }
       val o = new FooBar
       import o._
-    
+
       val fft4 = (input: Rep[Array[Double]]) => ffts(input, 4)
       codegen.emitSource(fft4, "FFT4", new PrintWriter(System.out))
       val fft4c = compile(fft4)

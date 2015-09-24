@@ -307,7 +307,7 @@ trait PrimitiveOps extends Variables with OverloadHack { //why not extends Base?
   def long_toint(lhs: Rep[Long])(implicit pos: SourceContext): Rep[Int]
 }
 
-trait PrimitiveOpsExp extends PrimitiveOps with EffectExp {
+trait PrimitiveOpsExp extends PrimitiveOps with VariablesExp with EffectExp {
   this: ImplicitOps =>
   
   implicit def byteTyp: Typ[Byte] = manifestTyp
@@ -548,7 +548,7 @@ trait PrimitiveOpsExp extends PrimitiveOps with EffectExp {
   }).asInstanceOf[Exp[A]]
 }
 
-trait PrimitiveOpsExpOpt extends PrimitiveOpsExp {
+trait PrimitiveOpsExpOpt extends PrimitiveOpsExp with VariablesExpOpt {
   override def int_plus(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext) : Exp[Int] = (lhs,rhs) match {
     case (Const(a),Const(b)) => unit(a+b)
     case (Const(0),b) => b
