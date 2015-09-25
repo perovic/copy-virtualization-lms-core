@@ -7,6 +7,8 @@ import common._
 import org.scala_lang.virtualized.SourceContext
 import java.io.PrintWriter
 
+import scala.lms.util.OverloadHack
+
 // NOTE(trans) this is getting hacky -- remove and just use PrimitiveOps?
 
 trait LiftArith {
@@ -15,17 +17,17 @@ trait LiftArith {
   implicit def numericToRep[T:Numeric:Typ](x: T) = unit(x)
 }
 
-trait Arith extends Base with LiftArith {
+trait Arith extends Base with PrimitiveOps with LiftPrimitives {
   //todo removed this, I can see now that having these implicits replicated everywhere can force us to control the
   //types that are allowed to be lifted more explicitly
   //implicit def unit(x: Double): Rep[Double]
 
 //  <<<<<<< HEAD
-  implicit def intTyp: Typ[Int]
-  implicit def doubleTyp: Typ[Double]
+//  implicit def intTyp: Typ[Int]
+//  implicit def doubleTyp: Typ[Double]
 
   // aks: this is a workaround for the infix methods not intercepting after Typs were added everywhere
-  implicit def intToArithOps(i: Int) = new doubleArithOps(unit(i))
+//  implicit def intToArithOps(i: Int) = new doubleArithOps(unit(i))
 //  =======
 //  implicit def int2Double(x: Rep[Int]): Rep[Double] = x.asInstanceOf[Rep[Double]]
 //
@@ -33,14 +35,14 @@ trait Arith extends Base with LiftArith {
 //  implicit def intToDoubleArithOps(i: Int) = new doubleArithOps(unit(i))
 //  implicit def doubleToArithOps(i: Double) = new doubleArithOps(unit(i))
 //  >>>>>>> macro-trans
-  implicit def intToRepDbl(i: Int) : Rep[Double] = unit(i)
+//  implicit def intToRepDbl(i: Int) : Rep[Double] = unit(i)
 
   // NOTE: the results of int operations are still doubles. 
   // a realistic implementation (such as the one in core)
   // needs specialized arithmetic for each primitive type.
-  implicit class intArithOps(x: Rep[Int]) {
-    def toDouble = x.asInstanceOf[Rep[Double]]
-  }
+//  implicit class intArithOps(x: Rep[Int]) {
+//    def toDouble = x.asInstanceOf[Rep[Double]]
+//  }
 
   implicit class doubleArithOps(x: Rep[Double]) {
     def +(y: Rep[Double]) = infix_+(x,y)
@@ -55,22 +57,23 @@ trait Arith extends Base with LiftArith {
   def infix_/(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext): Rep[Double]
 }
 
-trait VarArith extends Arith with Variables {
-  implicit def doubleArithVOps(x: Var[Double]) = new doubleArithOps(readVar(x))
-}
+//trait VarArith extends Arith with Variables {
+//  implicit def doubleArithVOps(x: Var[Double]) = new doubleArithOps(readVar(x))
+//}
 
-trait ArithExp extends Arith with BaseExp {
+trait ArithExp extends PrimitiveOpsExp with BaseExp with Arith {
   //todo removed below as now handled in Base traits
   //implicit def unit(x: Double) = Const(x)
 
-  implicit def intTyp: Typ[Int] = ManifestTyp(implicitly)
-  implicit def doubleTyp: Typ[Double] = ManifestTyp(implicitly)
+//  implicit def intTyp: Typ[Int] = ManifestTyp(implicitly)
+//  implicit def doubleTyp: Typ[Double] = ManifestTyp(implicitly)
 
   case class Plus(x: Exp[Double], y: Exp[Double]) extends Def[Double]
   case class Minus(x: Exp[Double], y: Exp[Double]) extends Def[Double]
   case class Times(x: Exp[Double], y: Exp[Double]) extends Def[Double]
   case class Div(x: Exp[Double], y: Exp[Double]) extends Def[Double]
 
+  //this is duplicate stuff from the PrimitiveOps but we keep it so the tests don't break
   def infix_+(x: Exp[Double], y: Exp[Double])(implicit pos: SourceContext) = Plus(x, y)
   def infix_-(x: Exp[Double], y: Exp[Double])(implicit pos: SourceContext) = Minus(x, y)
   def infix_*(x: Exp[Double], y: Exp[Double])(implicit pos: SourceContext) = Times(x, y)
