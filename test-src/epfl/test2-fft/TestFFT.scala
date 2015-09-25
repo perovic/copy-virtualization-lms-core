@@ -7,12 +7,11 @@ import test1._
 import org.scala_lang.virtualized.SourceContext
 import org.scala_lang.virtualized.virtualize
 
-
 import java.io.PrintWriter
 
 import org.scalatest._
 
-//@virtualize //TODO?
+@virtualize
 trait FFT extends Arith { this: Trig =>
 
   def omega(k: Int, N: Int): Complex = {
@@ -55,12 +54,7 @@ trait FFT extends Arith { this: Trig =>
       } unzip;
       even2 ::: odd2
   }
-
 }
-
-trait FFTExp extends FFT with ArithExp with TrigExp with VariablesExp
-
-trait FFTExpOpt extends FFTExp with ArithOpsExpOptFFT with TrigExpOptFFT with VariablesExpOpt
 
 trait ArithOpsExpOptFFT extends ArithExpOpt {
 
@@ -88,13 +82,11 @@ trait TrigExpOptFFT extends TrigExpOpt {
   }
 }
 
-
 trait FlatResult extends BaseExp { // just to make dot output nicer
 
   case class Result[T](x: Any) extends Def[T]
 
   def result[T:Typ](x: Any): Exp[T] = toAtom(Result[T](x))
-
 }
 
 trait ScalaGenFlat extends ScalaGenBase {
