@@ -11,7 +11,6 @@ import java.io.PrintWriter
 
 import org.scalatest._
 
-@virtualize
 trait FFT extends Arith { this: Trig =>
 
   def omega(k: Int, N: Int): Complex = {

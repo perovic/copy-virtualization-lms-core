@@ -48,8 +48,6 @@ trait ArithStr extends Arith with BaseStr {
    def infix_/(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext) = "(%s/%s)".format(x,y)
 }
 
-
-
 class TestPower extends FileDiffSuite {
 
    val prefix = home + "test-out/epfl/test2-"

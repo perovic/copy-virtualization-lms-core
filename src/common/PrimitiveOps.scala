@@ -19,8 +19,6 @@ trait LiftPrimitives {
   implicit def chainFloatToRepDouble[A:Typ](x: A)(implicit c: A => Rep[Float]): Rep[Double] = repFloatToRepDouble(c(x))
 }
 
-
-
 /**
  * This file is extremely boilerplate and redundant and does not take advantage of any of
  * Scala's type hierarchy to reduce the amount of IR nodes or code generation require.
