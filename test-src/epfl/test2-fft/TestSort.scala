@@ -36,7 +36,7 @@
 //       val (odd0, even0) = splitOddEven(xs)
 //       val (odd1, even1) = (merge(odd0), merge(even0))
 //       val (odd2, even2) = odd1 zip even1 map {
-//         case (x, y) => 
+//         case (x, y) =>
 //           (min(x,y), max(x,y))
 //       } unzip;
 //       mergeOddEven(odd2, even2)

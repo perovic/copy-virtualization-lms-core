@@ -139,6 +139,7 @@ class TestFFT extends FileDiffSuite {
 
   def testFFT3 = {
     withOutFile(prefix+"fft3") {
+      trait caca extends FFT with ArithOpsExpOptFFT with TrigExpOptFFT with ArraysExp with CompileScala
       class FooBar extends FFT with ArithOpsExpOptFFT with TrigExpOptFFT with ArraysExp with CompileScala {
 
 

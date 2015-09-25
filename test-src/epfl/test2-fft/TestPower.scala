@@ -8,12 +8,12 @@ import org.scala_lang.virtualized.SourceContext
 
 import java.io.PrintWriter
 
-trait Power1 extends PrimitiveOps with LiftPrimitives {
+trait Power1 { this: Arith =>
    def power(b: Rep[Double], x: Int): Rep[Double] =
      if (x == 0) 1.0 else b * power(b, x - 1)
 }
 
-trait Power2 extends PrimitiveOps with LiftPrimitives {
+trait Power2 { this: Arith =>
    def power(b: Rep[Double], x: Int)(implicit pos: SourceContext): Rep[Double] = {
      if (x == 0) 1.0
      else if ((x&1) == 0) { val y = power(b, x/2); y * y }
@@ -35,12 +35,12 @@ trait BaseStr extends Base {
    implicit def nullTyp: Typ[Null] = Typ(implicitly)
 }
 
-trait ArithStr extends PrimitiveOps with BaseStr {
+trait ArithStr extends Arith with BaseStr {
    //todo removed below
    //implicit def unit(x: Double) = x.toString
 
-   implicit def intTyp: Typ[Int] = Typ(implicitly)
-   implicit def doubleTyp: Typ[Double] = Typ(implicitly)
+   implicit override def intTyp: Typ[Int] = Typ(implicitly)
+   implicit override def doubleTyp: Typ[Double] = Typ(implicitly)
 
    def infix_+(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext) = "(%s+%s)".format(x,y)
    def infix_-(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext) = "(%s-%s)".format(x,y)
@@ -48,8 +48,10 @@ trait ArithStr extends PrimitiveOps with BaseStr {
    def infix_/(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext) = "(%s/%s)".format(x,y)
 }
 
+
+
 class TestPower extends FileDiffSuite {
-  
+
    val prefix = home + "test-out/epfl/test2-"
 
    def testPower = {
@@ -66,7 +68,7 @@ class TestPower extends FileDiffSuite {
        import o._
        power(2,4)
      }
-    
+
      println {
        val o = new TestPower with ArithRepString
        import o._
@@ -94,7 +96,7 @@ class TestPower extends FileDiffSuite {
        println(r)
      }
      {
-       val o = new Power1 with PrimitiveOpsExp
+       val o = new Power1 with ArithExp
        import o._
 
        val r = power(fresh[Double] + fresh[Double],4)
@@ -105,7 +107,7 @@ class TestPower extends FileDiffSuite {
      }
 
      {
-       val o = new Power1 with PrimitiveOpsExpOpt
+       val o = new Power1 with ArithExpOpt
        import o._
 
        val r = power(fresh[Double] + fresh[Double],4)
@@ -115,15 +117,15 @@ class TestPower extends FileDiffSuite {
        p.emitDepGraph(r, prefix+"power2-dot")
      }
      {
-       val o = new Power1 with PrimitiveOpsExpOpt
+       val o = new Power1 with ArithExpOpt
        import o._
        val f = (x: Rep[Double]) => power(x + x, 4)
-       val p = new ScalaGenFlat with ScalaGenPrimitiveOps { val IR: o.type = o }
+       val p = new ScalaGenFlat with ScalaGenArith { val IR: o.type = o }
        p.emitSource(f, "Power2", new PrintWriter(System.out))
      }
 
      {
-       val o = new Power2 with PrimitiveOpsExpOpt
+       val o = new Power2 with ArithExpOpt
        import o._
 
        val r = power(fresh[Double] + fresh[Double],4)
@@ -133,17 +135,17 @@ class TestPower extends FileDiffSuite {
        p.emitDepGraph(r, prefix+"power3-dot")
      }
      {
-       val o = new Power2 with PrimitiveOpsExpOpt
+       val o = new Power2 with ArithExpOpt
        import o._
        val f = (x: Rep[Double]) => power(x + x, 4)
-       val p = new ScalaGenFlat with ScalaGenPrimitiveOps { val IR: o.type = o }
+       val p = new ScalaGenFlat with ScalaGenArith { val IR: o.type = o }
        p.emitSource(f, "Power3", new PrintWriter(System.out))
      }
 
 
      {
-       val o = new Power1 with PrimitiveOpsExpOpt with CompileScala { self =>
-         val codegen = new ScalaGenFlat with ScalaGenPrimitiveOps { val IR: self.type = self }
+       val o = new Power1 with ArithExpOpt with CompileScala { self =>
+         val codegen = new ScalaGenFlat with ScalaGenArith { val IR: self.type = self }
        }
        import o._
 

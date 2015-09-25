@@ -7,7 +7,20 @@ import common._
 import org.scala_lang.virtualized.SourceContext
 import java.io.PrintWriter
 
-trait Arith extends Base with PrimitiveOps with LiftPrimitives {
+trait LiftArith {
+  this: Arith =>
+
+  implicit def numericToRep[T:Numeric:Typ](x: T) = unit(x)
+}
+
+trait Arith extends Base with LiftArith {
+
+  implicit def intTyp: Typ[Int]
+  implicit def doubleTyp: Typ[Double]
+
+  // aks: this is a workaround for the infix methods not intercepting after Typs were added everywhere
+  implicit def intToArithOps(i: Int) = new doubleArithOps(unit(i))
+  implicit def intToRepDbl(i: Int) : Rep[Double] = unit(i)
 
   implicit class doubleArithOps(x: Rep[Double]) {
     def +(y: Rep[Double]) = infix_+(x,y)
@@ -18,13 +31,19 @@ trait Arith extends Base with PrimitiveOps with LiftPrimitives {
 
   def infix_+(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext): Rep[Double]
   def infix_-(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext): Rep[Double]
-  //NOTE: implicit does not kick in due to PrimitiveOps shaddowing:
-  def infix_-(x: Double, y: Rep[Double])(implicit o: Overloaded29, pos: SourceContext):Rep[Double] = infix_-(unit(x), y)
   def infix_*(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext): Rep[Double]
   def infix_/(x: Rep[Double], y: Rep[Double])(implicit pos: SourceContext): Rep[Double]
 }
 
-trait ArithExp extends PrimitiveOpsExp with BaseExp with Arith {
+trait VarArith extends Arith with Variables {
+  implicit def doubleArithVOps(x: Var[Double]) = new doubleArithOps(readVar(x))
+}
+
+trait ArithExp extends BaseExp with Arith {
+
+  implicit def intTyp: Typ[Int] = ManifestTyp(implicitly)
+  implicit def doubleTyp: Typ[Double] = ManifestTyp(implicitly)
+  implicit def floatTyp: Typ[Float] = ManifestTyp(implicitly)
 
   case class Plus(x: Exp[Double], y: Exp[Double]) extends Def[Double]
   case class Minus(x: Exp[Double], y: Exp[Double]) extends Def[Double]

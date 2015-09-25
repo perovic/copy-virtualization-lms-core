@@ -97,7 +97,7 @@ trait Variables extends Base with OverloadHack with VariableImplicits with ReadV
 // >>>>>>> macro-trans
 }
 
-trait VariablesExp extends Variables with PrimitiveOps with ImplicitOpsExp with VariableImplicits with ReadVarImplicitExp {
+trait VariablesExp extends Variables with ImplicitOpsExp with VariableImplicits with ReadVarImplicitExp {
   // REMARK:
   // defining Var[T] as Sym[T] is dangerous. If someone forgets to define a more-specific implicit conversion from
   // Var[T] to Ops, e.g. implicit def varToRepStrOps(s: Var[String]) = new RepStrOpsCls(varToRep(s))
