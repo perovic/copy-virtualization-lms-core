@@ -10,31 +10,24 @@ import test3._
 
 import org.scala_lang.virtualized.virtualize
 
-<<<<<<< HEAD
-trait AckProg { this: LiftPrimitives with PrimitiveOps with Functions with Equal with IfThenElse =>
-=======
 @virtualize
-trait AckProg { this: Arith with Functions with Equal with IfThenElse =>
->>>>>>> macro-trans
+trait AckProg { this: PrimitiveOps with LiftPrimitives with ImplicitOps with Functions with Equal with IfThenElse =>
 
-  class LambdaOps[A:Typ,B:Typ](f: Rep[A=>B]) {
+  class LambdaOps[A:Typ, B:Typ](f: Rep[A=>B]) {
     def apply(x:Rep[A]): Rep[B] = doApply(f, x)
   }
-  implicit def lam[A:Typ,B:Typ](f: Rep[A] => Rep[B]): Rep[A=>B] = doLambda(f)
+  implicit def lam[A:Typ, B:Typ](f: Rep[A] => Rep[B]): Rep[A => B] = doLambda(f)
   //implicit def toLambdaOps[A,B](f: Rep[A=>B]) = new LambdaOps(f)
 
+  implicit def toDouble(f: Rep[Int]): Rep[Double] = f.asInstanceOf[Rep[Double]]
 
-<<<<<<< HEAD
-  def ack(m: Double): Rep[Int=>Int] = lam { n =>
-=======
   def ack(m: Double): Rep[Double=>Double] = lam { n =>
->>>>>>> macro-trans
     if (m == 0) n+1 else
     if (n == 0) ack(m-1)(1) else
-    ack(m-1)(ack(m)(n-1))
+      ack(m-1)(ack(m)(n-1))
   }
-  
-   Example due to Neil Jones, via Oleg on LtU (http://lambda-the-ultimate.org/node/4039#comment-61431)
+
+  /* Example due to Neil Jones, via Oleg on LtU (http://lambda-the-ultimate.org/node/4039#comment-61431)
   
   ack(2,n) should specialize to:
   
@@ -44,30 +37,31 @@ trait AckProg { this: Arith with Functions with Equal with IfThenElse =>
   
   this actually "just works"
   
-  
+  */
 
 }
 
 
 
 class TestAck extends FileDiffSuite {
-  
+
   val prefix = home + "test-out/epfl/test4-"
 
   def testAck1 = {
     withOutFile(prefix+"ack1") {
       object AckProgExp extends AckProg
-        with EqualExp with IfThenElseExp with LiftPrimitives with PrimitiveOpsExpOpt
-        with FunctionsExternalDef1
+      with PrimitiveOpsExp with ImplicitOps with LiftPrimitives
+      with EqualExp with IfThenElseExp
+      with FunctionsExternalDef1
       import AckProgExp._
 
-      val f = (x:Rep[Int]) => ack(2)(x)
+      val f = (x:Rep[Double]) => ack(2)(x)
       //val r = ack(2)(fresh)
       //println(globalDefs.mkString("\n"))
       //println(r)
       //val p = new ExtractorsGraphViz with FunctionsGraphViz { val IR: AckProgExp.type = AckProgExp }
       //p.emitDepGraph(r, prefix+"ack1-dot")
-      val p = new ScalaGenPrimitiveOps with ScalaGenEqual with 
+      val p = new ScalaGenPrimitiveOps with ScalaGenEqual with
         ScalaGenIfThenElse with ScalaGenFunctionsExternal { val IR: AckProgExp.type = AckProgExp }
       p.emitSource(f, "Ack", new java.io.PrintWriter(System.out))
     }

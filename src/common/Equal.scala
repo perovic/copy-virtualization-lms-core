@@ -20,14 +20,14 @@ trait Equal extends Base with Variables with OverloadHack {
   // TODO: we need a better way of handling this, too many combinations
   // this occurs because Rep is an object, so it has an == and != method defined by default,
   // so there is no type error to force the implicit conversions
-  def __equal[A,B](a: Rep[A], b: Rep[B])(implicit o: Overloaded1, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = equals(a,b)
-  def __equal[A,B](a: Rep[A], b: Var[B])(implicit o: Overloaded2, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = equals(a, b)
-  def __equal[A,B](a: Var[A], b: Rep[B])(implicit o: Overloaded3, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = equals(a, b)
-  def __equal[A,B](a: Rep[A], b: B)(implicit o: Overloaded4, mA: Typ[A], mB: Typ[B], pos: SourceContext): Rep[Boolean] = equals(a, unit(b))
-  def __equal[A,B](a: A, b: Rep[B])(implicit o: Overloaded5, mA: Typ[A], mB: Typ[B], pos: SourceContext): Rep[Boolean] = equals(unit(a), b)
-  def __equal[A,B](a: Var[A], b: B)(implicit o: Overloaded6, mA: Typ[A], mB: Typ[B], pos: SourceContext): Rep[Boolean] = equals(a, unit(b))
-  def __equal[A,B](a: A, b: Var[B])(implicit o: Overloaded7, mA: Typ[A], mB: Typ[B], pos: SourceContext): Rep[Boolean] = equals(unit(a), b)
-  def __equal[A,B](a: Var[A], b: Var[B])(implicit o: Overloaded8, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = equals(a,b)
+  def infix_==[A,B](a: Rep[A], b: Rep[B])(implicit o: Overloaded1, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = equals(a,b)
+  def infix_==[A,B](a: Rep[A], b: Var[B])(implicit o: Overloaded2, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = equals(a, b)
+  def infix_==[A,B](a: Var[A], b: Rep[B])(implicit o: Overloaded3, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = equals(a, b)
+  def infix_==[A,B](a: Rep[A], b: B)(implicit o: Overloaded4, mA: Typ[A], mB: Typ[B], pos: SourceContext): Rep[Boolean] = equals(a, unit(b))
+  def infix_==[A,B](a: A, b: Rep[B])(implicit o: Overloaded5, mA: Typ[A], mB: Typ[B], pos: SourceContext): Rep[Boolean] = equals(unit(a), b)
+  def infix_==[A,B](a: Var[A], b: B)(implicit o: Overloaded6, mA: Typ[A], mB: Typ[B], pos: SourceContext): Rep[Boolean] = equals(a, unit(b))
+  def infix_==[A,B](a: A, b: Var[B])(implicit o: Overloaded7, mA: Typ[A], mB: Typ[B], pos: SourceContext): Rep[Boolean] = equals(unit(a), b)
+  def infix_==[A,B](a: Var[A], b: Var[B])(implicit o: Overloaded8, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = equals(a,b)
 
   def infix_!=[A,B](a: Rep[A], b: Rep[B])(implicit o: Overloaded1, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = notequals(a,b)
   def infix_!=[A,B](a: Rep[A], b: Var[B])(implicit o: Overloaded2, mA: Typ[A], mB: Typ[B], pos: SourceContext) : Rep[Boolean] = notequals(a, b)
@@ -40,28 +40,6 @@ trait Equal extends Base with Variables with OverloadHack {
 
   def equals[A:Typ,B:Typ](a: Rep[A], b: Rep[B])(implicit pos: SourceContext) : Rep[Boolean]
   def notequals[A:Typ,B:Typ](a: Rep[A], b: Rep[B])(implicit pos: SourceContext) : Rep[Boolean]
-// =======
-//   def infix_==[A,B](a: Rep[A], b: Rep[B])(implicit o: Overloaded1, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = equals(a,b)
-//   def infix_==[A,B](a: Rep[A], b: Var[B])(implicit o: Overloaded2, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = equals(a, b)
-//   def infix_==[A,B](a: Var[A], b: Rep[B])(implicit o: Overloaded3, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = equals(a, b)
-//   def infix_==[A,B](a: Rep[A], b: B)(implicit o: Overloaded4, mA: Manifest[A], mB: Manifest[B], pos: SourceContext): Rep[Boolean] = equals(a, unit(b))
-//   def infix_==[A,B](a: A, b: Rep[B])(implicit o: Overloaded5, mA: Manifest[A], mB: Manifest[B], pos: SourceContext): Rep[Boolean] = equals(unit(a), b)
-//   def infix_==[A,B](a: Var[A], b: B)(implicit o: Overloaded6, mA: Manifest[A], mB: Manifest[B], pos: SourceContext): Rep[Boolean] = equals(a, unit(b))
-//   def infix_==[A,B](a: A, b: Var[B])(implicit o: Overloaded7, mA: Manifest[A], mB: Manifest[B], pos: SourceContext): Rep[Boolean] = equals(unit(a), b)
-//   def infix_==[A,B](a: Var[A], b: Var[B])(implicit o: Overloaded8, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = equals(a,b)
-
-//   def infix_!=[A,B](a: Rep[A], b: Rep[B])(implicit o: Overloaded1, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = notequals(a,b)
-//   def infix_!=[A,B](a: Rep[A], b: Var[B])(implicit o: Overloaded2, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = notequals(a, b)
-//   def infix_!=[A,B](a: Var[A], b: Rep[B])(implicit o: Overloaded3, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = notequals(a, b)
-//   def infix_!=[A,B](a: Rep[A], b: B)(implicit o: Overloaded4, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = notequals(a, unit(b))
-//   def infix_!=[A,B](a: A, b: Rep[B])(implicit o: Overloaded5, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = notequals(unit(a), b)
-//   def infix_!=[A,B](a: Var[A], b: B)(implicit o: Overloaded6, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = notequals(a, unit(b))
-//   def infix_!=[A,B](a: A, b: Var[B])(implicit o: Overloaded7, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = notequals(unit(a), b)
-//   def infix_!=[A,B](a: Var[A], b: Var[B])(implicit o: Overloaded8, mA: Manifest[A], mB: Manifest[B], pos: SourceContext) : Rep[Boolean] = notequals(a,b)
-
-//   def equals[A:Manifest,B:Manifest](a: Rep[A], b: Rep[B])(implicit pos: SourceContext) : Rep[Boolean]
-//   def notequals[A:Manifest,B:Manifest](a: Rep[A], b: Rep[B])(implicit pos: SourceContext) : Rep[Boolean]
-// >>>>>>> macro-trans
 }
 
 trait EqualExpBridge extends BaseExp with BooleanOpsExp {

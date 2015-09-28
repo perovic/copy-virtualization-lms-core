@@ -35,7 +35,7 @@ case class NAutomaton[@specialized(Boolean,Char,Int) I, @specialized(Boolean,Cha
 
 
 @virtualize
-trait Util extends Base with Arith with Functions {
+trait Util extends Base with PrimitiveOps with Functions {
   
   class LambdaOps[A:Typ,B:Typ](f: Rep[A=>B]) {
     def apply(x:Rep[A]): Rep[B] = doApply(f, x)
@@ -96,7 +96,7 @@ trait ScalaGenDFAOps extends ScalaGenBase {
 }
 
 @virtualize
-trait NFAtoDFA extends DFAOps { this: Arith with Functions with Equal with IfThenElse =>
+trait NFAtoDFA extends DFAOps { this: PrimitiveOps with Functions with Equal with IfThenElse =>
 
 /*
 case class Automaton[I,O](out: O, next: I => Automaton[I,O])
