@@ -6,37 +6,39 @@ def apply(x0:Unit): Unit = {
 val x2 = LoopArray(100) { x1 => 
 1.0
 }
-val x5 = LoopArray(100) { x3 => 
-val x4 = 2.0 * x3
-x4
+val x6 = LoopArray(100) { x3 => 
+val x4 = x3.toDouble
+val x5 = 2.0 * x4
+x5
 }
-val x10 = LoopArray(100) { x6 => 
-val x7 = x2.apply(x6)
-val x8 = x5.apply(x6)
-val x9 = x7 + x8
-x9
+val x11 = LoopArray(100) { x7 => 
+val x8 = x2.apply(x7)
+val x9 = x6.apply(x7)
+val x10 = x8 + x9
+x10
 }
-val x13 = LoopReduce(100) { x11 => 
-val x12 = x10.apply(x11)
-x12
+val x14 = LoopReduce(100) { x12 => 
+val x13 = x11.apply(x12)
+x13
 }
-val x14 = x13 / 100
-val x26 = println(x14)
-val x18 = LoopReduce(100) { x15 => 
-val x16 = x10.apply(x15)
-val x17 = x16 * x16
-x17
+val x15 = 100.toDouble
+val x16 = x14 / x15
+val x28 = println(x16)
+val x20 = LoopReduce(100) { x17 => 
+val x18 = x11.apply(x17)
+val x19 = x18 * x18
+x19
 }
-val x19 = x18 / 100
-val x22 = LoopReduce(100) { x20 => 
-val x21 = x10.apply(x20)
-x21
+val x21 = x20 / x15
+val x24 = LoopReduce(100) { x22 => 
+val x23 = x11.apply(x22)
+x23
 }
-val x23 = x22 / 100
-val x24 = x23 * x23
-val x25 = x19 - x24
-val x27 = println(x25)
-x27
+val x25 = x24 / x15
+val x26 = x25 * x25
+val x27 = x21 - x26
+val x29 = println(x27)
+x29
 }
 }
 /*****************************************
