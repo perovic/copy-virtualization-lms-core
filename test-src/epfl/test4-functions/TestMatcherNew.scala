@@ -724,6 +724,7 @@ trait MatcherNewProg extends DFAOps with GAOps with NFAtoDFA with GAtoDA with Ut
   }
 }
 
+@virtualize
 class TestMatcherNew extends FileDiffSuite with EmbeddedControls {
 
   val prefix = home + "test-out/epfl/test4-"
@@ -879,8 +880,8 @@ class TestMatcherNew extends FileDiffSuite with EmbeddedControls {
                     gguard (a3 == 'B', true) {
                       //gstop()
                       gtrans(unit(List[Any](1))) { a4 => gstop() }
-          }}}}}},
-          gtrans { _ => gfindAAB() }) // in parallel...
+                    }}}}}},
+            gtrans { _ => gfindAAB() }) // in parallel...
         }
 
         convertGAtoDA(gfindAAB())
