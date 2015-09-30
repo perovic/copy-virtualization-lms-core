@@ -69,30 +69,28 @@ trait Dom extends Base {
 }
 
 @virtualize
-trait ConditionalProg { this: PrimitiveOps with LiftPrimitives with Equal with Print with IfThenElse =>
-  
+trait ConditionalProg { this: PrimitiveOps with Equal with Print with IfThenElse =>
+
   def test(x: Rep[Double]): Rep[Double] = {
-    
+
     print("yoyo")
 
     val z = if (x == x) {
       print("yoyo")
       print("xxx")
       print("yoyo")
-      (x + 4)
+      (x + 4.0)
     } else {
-      (x + 6)
+      (x + 6.0)
     }
-    
+
     print("yyy")
     print("yoyo")
-    
-    z + (x + 4)
+
+    z + (x + 4.0)
   }
-  
+
 }
-
-
 
 class TestConditional extends FileDiffSuite {
   
@@ -103,7 +101,7 @@ class TestConditional extends FileDiffSuite {
     
       println("-- begin")
 
-      new ConditionalProg with PrimitiveOpsExpOpt with EqualExp with PrintExp with LiftPrimitives
+      new ConditionalProg with PrimitiveOpsExp with EqualExp with PrintExp with LiftPrimitives
       with IfThenElseExp with StringOpsExp with ArrayOpsExp with SeqOpsExp
       with CompileScala { self =>
         val codegen = new ScalaGenIfThenElse with ScalaGenPrimitiveOps 
@@ -116,7 +114,7 @@ class TestConditional extends FileDiffSuite {
       }
     
       new ConditionalProg with LiftPrimitives with IfThenElseExp 
-      with PrimitiveOpsExpOpt with StringOpsExp with ArrayOpsExp with SeqOpsExp
+      with PrimitiveOpsExp with StringOpsExp with ArrayOpsExp with SeqOpsExp
       with EqualExp
       with PrintExp { self =>
         val codegen = new JSGenIfThenElse with JSGenPrimitiveOps 
