@@ -26,43 +26,40 @@ trait NestLambdaProg1 extends BooleanOps with PrimitiveOps with Functions with P
   
 }
 
-//trait NestCondProg2 extends BooleanOps with PrimitiveOps with Functions with IfThenElse with Print {
 @virtualize
 trait NestCondProg2 extends BooleanOps with PrimitiveOps with Functions with IfThenElse with Print {
 
   /* Previously this program exhibited behavior that is likely undesired in many
   cases. The definition of f was moved *into* g and into the conditional.
   The doLambda in the else branch would not be hoisted out of g either.
-  
+
   Although there are situations where this particular kind of code motion
   is an improvement (namely, if the probability of y == true is very low
   and the else branch would be cheap).
   */
-  
-  
+
+
   def test(x: Rep[Unit]) = {
-    val f = doLambda { x: Rep[Double] => 2 * x }
-    
+    val f = doLambda { x: Rep[Double] => 2.0 * x }
+
     val g = doLambda { y: Rep[Boolean] =>
       print("yo")
       if (y)
         f
       else
-        doLambda { x: Rep[Double] => x + 1 }
+        doLambda { x: Rep[Double] => x + 1.0 }
     }
     g
   }
-  
+
 }
 
-
-//trait NestCondProg3 extends BooleanOps with PrimitiveOps with Functions with IfThenElse with Print {
 @virtualize
 trait NestCondProg3 extends BooleanOps with PrimitiveOps with Functions with IfThenElse with Print {
 
   def test(x: Rep[Unit]) = {
-    val f = if (unit(true)) doLambda { x: Rep[Double] => 2 * x } else doLambda { x: Rep[Double] => 4 * x }
-    
+    val f = if (unit(true)) doLambda { x: Rep[Double] => 2.0 * x } else doLambda { x: Rep[Double] => 4.0 * x }
+
     val g = doLambda { y: Rep[Boolean] =>
       print("yo")
       if (y) {
@@ -70,12 +67,12 @@ trait NestCondProg3 extends BooleanOps with PrimitiveOps with Functions with IfT
         f
       } else {
         print("else")
-        if (unit(false)) doLambda { x: Rep[Double] => x + 1 } else doLambda { x: Rep[Double] => x + 2 }
+        if (unit(false)) doLambda { x: Rep[Double] => x + 1.0 } else doLambda { x: Rep[Double] => x + 2.0 }
       }
     }
     g
   }
-  
+
 }
 
 //trait NestCondProg4 extends BooleanOps with PrimitiveOps with Functions with IfThenElse with Print {
@@ -175,8 +172,6 @@ trait NestCondProg8 extends PrimitiveOps with LiftPrimitives with OrderingOps wi
   }
   
 }
-
-
 
 class TestCodemotion extends FileDiffSuite {
   
