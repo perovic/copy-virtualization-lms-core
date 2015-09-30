@@ -228,8 +228,8 @@ class TestSpeculative extends FileDiffSuite {
   // summary of the inner loop.
   def testSpeculative6 = {
     withOutFile(prefix+"speculative6") {
-     // test simple copy propagation through variable
-      trait Prog extends DSL {
+      // test simple copy propagation through variable
+      @virtualize trait Prog extends DSL {
         def test(x: Rep[Int]) = {
           print("FIXME -- WRONG RESULT")
           var i = 0
