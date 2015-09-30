@@ -331,7 +331,7 @@ class TestStable extends FileDiffSuite {
 
 
   def testStable2 = withOutFileChecked(prefix+"stable2") {
-    @virtualize trait Prog extends DSL {
+    @virtualize trait Prog extends DSL with PrimitiveOpsExpOpt {
       def test() = {
 
 
