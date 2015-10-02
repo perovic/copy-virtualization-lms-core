@@ -20,32 +20,53 @@ trait StringOps extends Variables with OverloadHack with PrimitiveOps {
 
 
   // TODO(trans) need to check if string concat works
-  def infix_+(s1: String, s2: Rep[Any])(implicit o: Overloaded1, pos: SourceContext) = string_plus(unit(s1), s2)
-  def infix_+[T:Typ](s1: String, s2: Var[T])(implicit o: Overloaded2, pos: SourceContext) = string_plus(unit(s1), readVar(s2))
-  def infix_+(s1: Rep[String], s2: Rep[Any])(implicit o: Overloaded1, pos: SourceContext) = string_plus(s1, s2)
-  def infix_+[T:Typ](s1: Rep[String], s2: Var[T])(implicit o: Overloaded2, pos: SourceContext) = string_plus(s1, readVar(s2))
-  def infix_+(s1: Rep[String], s2: Rep[String])(implicit o: Overloaded3, pos: SourceContext) = string_plus(s1, s2)
-  def infix_+(s1: Rep[String], s2: Var[String])(implicit o: Overloaded4, pos: SourceContext) = string_plus(s1, readVar(s2))
-  def infix_+(s1: Rep[Any], s2: Rep[String])(implicit o: Overloaded5, pos: SourceContext) = string_plus(s1, s2)
-  def infix_+(s1: Rep[Any], s2: Var[String])(implicit o: Overloaded6, pos: SourceContext) = string_plus(s1, readVar(s2))
-  def infix_+(s1: Rep[Any], s2: String)(implicit o: Overloaded7, pos: SourceContext) = string_plus(s1, unit(s2))
-  
-  def infix_+(s1: Var[String], s2: Rep[Any])(implicit o: Overloaded8, pos: SourceContext) = string_plus(readVar(s1), s2)  
-  def infix_+[T:Typ](s1: Var[String], s2: Var[T])(implicit o: Overloaded9, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))
-  def infix_+(s1: Var[String], s2: Rep[String])(implicit o: Overloaded10, pos: SourceContext) = string_plus(readVar(s1), s2)    
-  def infix_+(s1: Var[String], s2: Var[String])(implicit o: Overloaded11, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))    
-  def infix_+[T:Typ](s1: Var[T], s2: Rep[String])(implicit o: Overloaded12, pos: SourceContext) = string_plus(readVar(s1), s2)
-  def infix_+[T:Typ](s1: Var[T], s2: Var[String])(implicit o: Overloaded13, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))
-  def infix_+[T:Typ](s1: Var[T], s2: String)(implicit o: Overloaded14, pos: SourceContext) = string_plus(readVar(s1), unit(s2))
-  
-  // these are necessary to be more specific than arithmetic/numeric +. is there a more generic form of this that will work?
-  //def infix_+[R:Typ](s1: Rep[String], s2: R)(implicit c: R => Rep[Any], o: Overloaded15, pos: SourceContext) = string_plus(s1, c(s2))  
-  def infix_+(s1: Rep[String], s2: Double)(implicit o: Overloaded15, pos: SourceContext) = string_plus(s1, unit(s2))
-  def infix_+(s1: Rep[String], s2: Float)(implicit o: Overloaded16, pos: SourceContext) = string_plus(s1, unit(s2))
-  def infix_+(s1: Rep[String], s2: Int)(implicit o: Overloaded17, pos: SourceContext) = string_plus(s1, unit(s2))
-  def infix_+(s1: Rep[String], s2: Long)(implicit o: Overloaded18, pos: SourceContext) = string_plus(s1, unit(s2))
-  def infix_+(s1: Rep[String], s2: Short)(implicit o: Overloaded19, pos: SourceContext) = string_plus(s1, unit(s2))  
-  
+//  def infix_+(s1: String, s2: Rep[Any])(implicit o: Overloaded1, pos: SourceContext) = string_plus(unit(s1), s2)
+//  def infix_+[T:Typ](s1: String, s2: Var[T])(implicit o: Overloaded2, pos: SourceContext) = string_plus(unit(s1), readVar(s2))
+//  def infix_+(s1: Rep[String], s2: Rep[Any])(implicit o: Overloaded1, pos: SourceContext) = string_plus(s1, s2)
+//  def infix_+[T:Typ](s1: Rep[String], s2: Var[T])(implicit o: Overloaded2, pos: SourceContext) = string_plus(s1, readVar(s2))
+//  def infix_+(s1: Rep[String], s2: Rep[String])(implicit o: Overloaded3, pos: SourceContext) = string_plus(s1, s2)
+//  def infix_+(s1: Rep[String], s2: Var[String])(implicit o: Overloaded4, pos: SourceContext) = string_plus(s1, readVar(s2))
+//  def infix_+(s1: Rep[Any], s2: Rep[String])(implicit o: Overloaded5, pos: SourceContext) = string_plus(s1, s2)
+//  def infix_+(s1: Rep[Any], s2: Var[String])(implicit o: Overloaded6, pos: SourceContext) = string_plus(s1, readVar(s2))
+//  def infix_+(s1: Rep[Any], s2: String)(implicit o: Overloaded7, pos: SourceContext) = string_plus(s1, unit(s2))
+//
+//  def infix_+(s1: Var[String], s2: Rep[Any])(implicit o: Overloaded8, pos: SourceContext) = string_plus(readVar(s1), s2)
+//  def infix_+[T:Typ](s1: Var[String], s2: Var[T])(implicit o: Overloaded9, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))
+//  def infix_+(s1: Var[String], s2: Rep[String])(implicit o: Overloaded10, pos: SourceContext) = string_plus(readVar(s1), s2)
+//  def infix_+(s1: Var[String], s2: Var[String])(implicit o: Overloaded11, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))
+//  def infix_+[T:Typ](s1: Var[T], s2: Rep[String])(implicit o: Overloaded12, pos: SourceContext) = string_plus(readVar(s1), s2)
+//  def infix_+[T:Typ](s1: Var[T], s2: Var[String])(implicit o: Overloaded13, pos: SourceContext) = string_plus(readVar(s1), readVar(s2))
+//  def infix_+[T:Typ](s1: Var[T], s2: String)(implicit o: Overloaded14, pos: SourceContext) = string_plus(readVar(s1), unit(s2))
+//
+//  // these are necessary to be more specific than arithmetic/numeric +. is there a more generic form of this that will work?
+//  //def infix_+[R:Typ](s1: Rep[String], s2: R)(implicit c: R => Rep[Any], o: Overloaded15, pos: SourceContext) = string_plus(s1, c(s2))
+//  def infix_+(s1: Rep[String], s2: Double)(implicit o: Overloaded15, pos: SourceContext) = string_plus(s1, unit(s2))
+//  def infix_+(s1: Rep[String], s2: Float)(implicit o: Overloaded16, pos: SourceContext) = string_plus(s1, unit(s2))
+//  def infix_+(s1: Rep[String], s2: Int)(implicit o: Overloaded17, pos: SourceContext) = string_plus(s1, unit(s2))
+//  def infix_+(s1: Rep[String], s2: Long)(implicit o: Overloaded18, pos: SourceContext) = string_plus(s1, unit(s2))
+//  def infix_+(s1: Rep[String], s2: Short)(implicit o: Overloaded19, pos: SourceContext) = string_plus(s1, unit(s2))
+
+  // FIXME: enabling this causes trouble with DeliteOpSuite. investigate!!
+  //def infix_length(s: Rep[String])(implicit pos: SourceContext) = string_length(s)
+
+   implicit class StringOpsInfixRepString(s1: Rep[String]) {
+     def startsWith(s2: Rep[String])(implicit pos: SourceContext) = string_startswith(s1,s2)
+     def trim(separators: Rep[String])(implicit pos: SourceContext) = string_split(s1, separators, unit(0))
+     def split(separators: Rep[String], limit: Rep[Int])(implicit pos: SourceContext) = string_split(s1, separators, limit)
+     def charAt(i: Rep[Int])(implicit pos: SourceContext) = string_charAt(s1,i)
+     def endsWith(e: Rep[String])(implicit pos: SourceContext) = string_endsWith(s1,e)
+     def contains(s2: Rep[String])(implicit pos: SourceContext) = string_contains(s1,s2)
+     //def toDouble(start: Rep[Int], end: Rep[Int])(implicit pos: SourceContext) = //FIXME string_substring(s1,start,end)
+     def toInt(implicit pos: SourceContext) = string_toint(s1)
+     // TODO(trans) check if FIXME still valid
+     // FIXME: enabling this causes trouble with DeliteOpSuite. investigate!!
+     def length(s1: Rep[String])(implicit pos: SourceContext) = string_length(s1)
+   }
+
+  object String {
+    def valueOf(a: Rep[Any])(implicit pos: SourceContext) = string_valueof(a)
+  }
+
   def infix_startsWith(s1: Rep[String], s2: Rep[String])(implicit pos: SourceContext) = string_startswith(s1,s2)
   def infix_trim(s: Rep[String])(implicit pos: SourceContext) = string_trim(s)
   def infix_split(s: Rep[String], separators: Rep[String])(implicit pos: SourceContext) = string_split(s, separators, unit(0))
@@ -58,28 +79,6 @@ trait StringOps extends Variables with OverloadHack with PrimitiveOps {
   def infix_toInt(s: Rep[String])(implicit pos: SourceContext) = string_toint(s)
   def infix_toLong(s: Rep[String])(implicit pos: SourceContext) = string_tolong(s)
   def infix_substring(s: Rep[String], start: Rep[Int], end: Rep[Int])(implicit pos: SourceContext) = string_substring(s,start,end)
-
-  // FIXME: enabling this causes trouble with DeliteOpSuite. investigate!!
-  //def infix_length(s: Rep[String])(implicit pos: SourceContext) = string_length(s)
-// =======
-
-//   implicit class StringOpsInfixRepString(s1: Rep[String]) {
-//     def startsWith(s2: Rep[String])(implicit pos: SourceContext) = string_startswith(s1,s2)
-//     def trim(separators: Rep[String])(implicit pos: SourceContext) = string_split(s1, separators, unit(0))
-//     def split(separators: Rep[String], limit: Rep[Int])(implicit pos: SourceContext) = string_split(s1, separators, limit)
-//     def charAt(i: Rep[Int])(implicit pos: SourceContext) = string_charAt(s1,i)
-//     def endsWith(e: Rep[String])(implicit pos: SourceContext) = string_endsWith(s1,e)
-//     def contains(s2: Rep[String])(implicit pos: SourceContext) = string_contains(s1,s2)
-//     def toDouble(start: Rep[Int], end: Rep[Int])(implicit pos: SourceContext) = string_substring(s1,start,end)
-//     // TODO(trans) check if FIXME still valid
-//     // FIXME: enabling this causes trouble with DeliteOpSuite. investigate!!
-//     def length(s1: Rep[String])(implicit pos: SourceContext) = string_length(s1)
-//   }
-// >>>>>>> macro-trans
-
-  object String {
-    def valueOf(a: Rep[Any])(implicit pos: SourceContext) = string_valueof(a)
-  }
 
   def string_plus(s: Rep[Any], o: Rep[Any])(implicit pos: SourceContext): Rep[String]
   def string_startswith(s1: Rep[String], s2: Rep[String])(implicit pos: SourceContext): Rep[Boolean]

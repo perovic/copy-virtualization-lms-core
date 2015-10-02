@@ -8,7 +8,7 @@ import org.scala_lang.virtualized.SourceContext
 
 trait ObjectOps extends Variables with OverloadHack { //with StringOps
   implicit class ObjectOpsInfix(lhs: Rep[Any]) {
-    def ToString = infix_ToString(lhs)
+    def ToString = infix_toString(lhs)
   }
   implicit class ObjectOpsInfixGeneric[A:Typ](lhs: Rep[A]) {
     def unsafeImmutable = infix_unsafeImmutable(lhs)
