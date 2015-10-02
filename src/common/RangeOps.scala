@@ -27,12 +27,6 @@ trait RangeOps extends Base with PrimitiveOps with OverloadHack {
     def until(end: Rep[Int])(implicit pos: SourceContext) = range_until(start,end)
   }
 
-  //def infix_until(start: Rep[Int], end: Rep[Int])(implicit pos: SourceContext) = range_until(start,end)
-  //def infix_start(r: Rep[Range])(implicit pos: SourceContext) = range_start(r)
-  //def infix_step(r: Rep[Range])(implicit pos: SourceContext) = range_step(r)
-  //def infix_end(r: Rep[Range])(implicit pos: SourceContext) = range_end(r)
-  //def infix_foreach(r: Rep[Range], f: Rep[Int] => Rep[Unit]) = range_foreach(r, f)
-
   def range_until(start: Rep[Int], end: Rep[Int])(implicit pos: SourceContext): Rep[Range]
   def range_start(r: Rep[Range])(implicit pos: SourceContext) : Rep[Int]
   def range_step(r: Rep[Range])(implicit pos: SourceContext) : Rep[Int]

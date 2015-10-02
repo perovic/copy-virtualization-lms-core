@@ -15,9 +15,7 @@ trait Blocks extends Expressions {
     case p: Product => p.productIterator.toList.flatMap(blocks(_))
     case _ => Nil
   }  
-  
 }
-
 
 trait Effects extends Expressions with Blocks with Utils {
   
@@ -37,7 +35,7 @@ trait Effects extends Expressions with Blocks with Utils {
 
   // --- summary
 
-  case class Summary(
+  case class Summary (
     val maySimple: Boolean,
     val mstSimple: Boolean,
     val mayGlobal: Boolean,
@@ -74,8 +72,8 @@ trait Effects extends Expressions with Blocks with Utils {
   def mustOnlyRead(u: Summary): Boolean = u == Pure().copy(mayRead=u.mayRead, mstRead=u.mstRead) // only reads allowed
   def mustIdempotent(u: Summary): Boolean = mustOnlyRead(u) // currently only reads are treated as idempotent
 
-
-
+  // those methods are still named "infix" for hoistorical reasons but are not actually invoced by the Scala
+  // compiler, instead they get triggered by the implicit wrapper classes
   def infix_orElse(u: Summary, v: Summary) = new Summary(
     u.maySimple || v.maySimple, u.mstSimple && v.mstSimple,
     u.mayGlobal || v.mayGlobal, u.mstGlobal && v.mstGlobal,

@@ -21,7 +21,6 @@ trait ArrayOps extends Variables {
   implicit def arrayTyp[T:Typ]: Typ[Array[T]]
 
   // multiple definitions needed because implicits won't chain
-  // not using infix here because apply doesn't work with infix methods
   implicit def varToArrayOps[T:Typ](x: Var[Array[T]]) = new ArrayOpsCls(readVar(x))
   implicit def repArrayToArrayOps[T:Typ](a: Rep[Array[T]]) = new ArrayOpsCls(a)
   implicit def arrayToArrayOps[T:Typ](a: Array[T]) = new ArrayOpsCls(unit(a))

@@ -5,6 +5,7 @@ import java.io.PrintWriter
 import org.scala_lang.virtualized.SourceContext
 import scala.collection.mutable.ArrayBuffer
 import scala.lms.internal.GenericNestedCodegen
+//import scala.lms.common._
 import collection.mutable.ArrayBuffer
 import org.scala_lang.virtualized.SourceContext
 
@@ -27,17 +28,6 @@ trait ArrayBufferOps extends Base with StringOps with ArrayOps {
     def toArray(implicit pos: SourceContext) = arraybuffer_toarray(l)
     def toSeq(implicit pos: SourceContext) = arraybuffer_toseq(l)
   }
-  
-  //1.0.x TODO def infix_+=[A:Typ](l: Rep[ArrayBuffer[A]], e: Rep[A])(implicit pos: SourceContext) = arraybuffer_append(l, e)
-
-  /* when mixed in with OptiML, one of these infix operations causes an NPE in the scala-virtualized compiler */ //TR: still the case?
-  /*
-  def infix_mkString[A:Typ](l: Rep[ArrayBuffer[A]], sep: Rep[String] = unit(""))(implicit pos: SourceContext) = arraybuffer_mkstring(l, sep)
-  def infix_+=[A:Typ](l: Rep[ArrayBuffer[A]], e: Rep[A])(implicit pos: SourceContext) = arraybuffer_append(l, e)
-  def infix_append[A:Typ](l: Rep[ArrayBuffer[A]], e: Rep[A])(implicit pos: SourceContext) = arraybuffer_append(l, e)
-  def infix_toArray[A:Typ](l: Rep[ArrayBuffer[A]])(implicit pos: SourceContext) = arraybuffer_toarray(l)
-  def infix_toSeq[A:Typ](l: Rep[ArrayBuffer[A]])(implicit pos: SourceContext) = arraybuffer_toseq(l)
-  */
   
   def arraybuffer_mkstring[A:Typ](l: Rep[ArrayBuffer[A]], sep: Rep[String])(implicit pos: SourceContext): Rep[String]
   def arraybuffer_append[A:Typ](l: Rep[ArrayBuffer[A]], e: Rep[A])(implicit pos: SourceContext): Rep[Unit]

@@ -128,27 +128,7 @@ def convertNFAtoDFA(in: NIO): DIO = {
 
   def stop(): NIO = Nil
   
-
   type CharSet = Option[Char]
-  /*
-  def infix_contains(s: CharSet, c: Rep[Char]): Rep[Boolean] = s match {
-    case Some(c1) => c == c1
-    case None => unit(true)
-  }
-
-  def infix_intersect(s1: CharSet, s2: CharSet): CharSet = (s1,s2) match {
-    case (Some(c1), Some(c2)) if c1 == c2 => None
-    case (Some(c1), Some(c2)) => None
-    case _ => None
-  }
-
-  def infix_diff(s1: CharSet, s2: CharSet): CharSet = (s1,s2) match {
-    case (Some(c1), Some(c2)) if c1 == c2 => None
-    case (Some(c1), Some(c2)) => None
-    case _ => None
-  }
-  */
-  
   
   def exploreNFA[A:Typ](xs: NIO, cin: Rep[Char])(flag: Rep[Any] => Rep[A] => Rep[A])(k: NIO => Rep[A]): Rep[A] = xs match {
     case Nil => k(Nil)

@@ -8,7 +8,6 @@ import org.scala_lang.virtualized.SourceContext
 trait IterableOps extends Variables {
 
   // multiple definitions needed because implicits won't chain
-  // not using infix here because apply doesn't work with infix methods
   implicit def varToIterableOps[A:Typ](x: Var[Iterable[A]]) = new IterableOpsCls(readVar(x))
   implicit def repIterableToIterableOps[T:Typ](a: Rep[Iterable[T]]) = new IterableOpsCls(a)
   implicit def iterableToIterableOps[T:Typ](a: Iterable[T]) = new IterableOpsCls(unit(a))

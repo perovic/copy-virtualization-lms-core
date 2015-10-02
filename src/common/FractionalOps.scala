@@ -5,14 +5,10 @@ import java.io.PrintWriter
 import org.scala_lang.virtualized.SourceContext
 
 trait FractionalOps extends ImplicitOps {
-  // TODO(trans) infix_/ won't get called. Is this still needed at all?
-  def infix_/[A,T](lhs: Rep[T], rhs: Rep[A])(implicit c: A => T, f: Fractional[T], mA: Typ[A], mT: Typ[T], pos: SourceContext) = fractional_divide(lhs,implicit_convert[A,T](rhs))
-
   def fractional_divide[T:Fractional:Typ](lhs: Rep[T], rhs: Rep[T])(implicit pos: SourceContext): Rep[T]
 }
 
 trait FractionalOpsExp extends FractionalOps with ImplicitOpsExp with EffectExp {
-  
   case class FractionalDivide[T](lhs: Exp[T], rhs: Exp[T])(implicit val f: Fractional[T], val mT: Typ[T]) extends Def[T]
 
   def fractional_divide[T:Fractional:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext) : Rep[T] = FractionalDivide(lhs, rhs)
