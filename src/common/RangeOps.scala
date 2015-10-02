@@ -1,13 +1,14 @@
-package scala.virtualization.lms
+package scala.lms
 package common
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.util.OverloadHack
-import scala.virtualization.lms.internal.{GenericNestedCodegen, GenerationFailedException}
+import scala.lms.util.OverloadHack
+import scala.lms.internal.{GenericNestedCodegen, GenerationFailedException}
 import org.scala_lang.virtualized.SourceContext
 
-trait RangeOps extends Base with OverloadHack {
+trait RangeOps extends Base with PrimitiveOps with OverloadHack {
+  implicit def rangeTyp: Typ[Range]
   // workaround for infix not working with manifests
   implicit def repRangeToRangeOps(r: Rep[Range]) = new rangeOpsCls(r)
   class rangeOpsCls(r: Rep[Range]){
@@ -26,12 +27,6 @@ trait RangeOps extends Base with OverloadHack {
     def until(end: Rep[Int])(implicit pos: SourceContext) = range_until(start,end)
   }
 
-  //def infix_until(start: Rep[Int], end: Rep[Int])(implicit pos: SourceContext) = range_until(start,end)
-  //def infix_start(r: Rep[Range])(implicit pos: SourceContext) = range_start(r)
-  //def infix_step(r: Rep[Range])(implicit pos: SourceContext) = range_step(r)
-  //def infix_end(r: Rep[Range])(implicit pos: SourceContext) = range_end(r)
-  //def infix_foreach(r: Rep[Range], f: Rep[Int] => Rep[Unit]) = range_foreach(r, f)
-
   def range_until(start: Rep[Int], end: Rep[Int])(implicit pos: SourceContext): Rep[Range]
   def range_start(r: Rep[Range])(implicit pos: SourceContext) : Rep[Int]
   def range_step(r: Rep[Range])(implicit pos: SourceContext) : Rep[Int]
@@ -39,7 +34,9 @@ trait RangeOps extends Base with OverloadHack {
   def range_foreach(r: Rep[Range], f: (Rep[Int]) => Rep[Unit])(implicit pos: SourceContext): Rep[Unit]
 }
 
-trait RangeOpsExp extends RangeOps with FunctionsExp {
+trait RangeOpsExp extends RangeOps with PrimitiveOps with EffectExp {
+  implicit def rangeTyp: Typ[Range] = manifestTyp
+
   case class Until(start: Exp[Int], end: Exp[Int]) extends Def[Range]
   case class RangeStart(r: Exp[Range]) extends Def[Int]
   case class RangeStep(r: Exp[Range]) extends Def[Int]
@@ -65,7 +62,7 @@ trait RangeOpsExp extends RangeOps with FunctionsExp {
     reflectEffect(RangeForeach(r.start, r.end, i, a), summarizeEffects(a).star)
   }
   
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
     case Reflect(RangeForeach(s,e,i,b), u, es) => reflectMirrored(Reflect(RangeForeach(f(s),f(e),f(i).asInstanceOf[Sym[Int]],f(b)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)    
     case Reflect(RangeStart(r), u, es) => reflectMirrored(Reflect(RangeStart(f(r)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case Reflect(RangeStep(r), u, es) => reflectMirrored(Reflect(RangeStep(f(r)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)

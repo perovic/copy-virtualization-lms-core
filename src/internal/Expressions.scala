@@ -1,4 +1,4 @@
-package scala.virtualization.lms
+package scala.lms
 package internal
 
 import org.scala_lang.virtualized.SourceContext
@@ -15,14 +15,51 @@ import java.lang.{StackTraceElement,Thread}
  */
 trait Expressions extends Utils {
 
-  abstract class Exp[+T:Manifest] { // constants/symbols (atomic)
-    def tp: Manifest[T @uncheckedVariance] = manifest[T] //invariant position! but hey...
+  abstract class Typ[T] {
+    def typeArguments: List[Typ[_]]
+    def arrayTyp: Typ[Array[T]]
+    def runtimeClass: java.lang.Class[_]
+    def <:<(that: Typ[_]): Boolean
+    def erasure: java.lang.Class[_]
+  }
+
+  case class ManifestTyp[T](mf: Manifest[T]) extends Typ[T] {
+    def typeArguments: List[Typ[_]]   = mf.typeArguments.map(ManifestTyp(_))
+    def arrayTyp: Typ[Array[T]] = ManifestTyp(mf.arrayManifest)
+    def runtimeClass: java.lang.Class[_] = mf.runtimeClass
+    def <:<(that: Typ[_]): Boolean = that match { 
+      case ManifestTyp(mf1) => mf.<:<(mf1) 
+      case _ => false 
+    }
+    def erasure: java.lang.Class[_] = mf.erasure
+    //override def canEqual(that: Any): Boolean = mf.canEqual(that) // TEMP
+    //override def equals(that: Any): Boolean = mf.equals(that) // TEMP
+    //override def hashCode = mf.hashCode
+    override def toString = mf.toString
+  }
+
+  def typ[T:Typ]: Typ[T] = implicitly[Typ[T]]
+
+  def simpleClassTyp[C](c: Class[C]): Typ[C] =
+    ManifestTyp(scala.reflect.ManifestFactory.classType(c))
+  def simpleClassTyp[C[_],A:Typ](c: Class[C[A]]) = {
+    val ManifestTyp(m) = typ[A]
+    ManifestTyp(scala.reflect.ManifestFactory.classType(c,m))
+  }
+  def simpleClassTyp[C[_,_],A:Typ,B:Typ](c: Class[C[A,B]]) = {
+    val ManifestTyp(mA) = typ[A]
+    val ManifestTyp(mB) = typ[B]
+    ManifestTyp(scala.reflect.ManifestFactory.classType(c,mA,mB))
+  }
+
+  abstract class Exp[+T:Typ] { // constants/symbols (atomic)
+    def tp: Typ[T @uncheckedVariance] = implicitly[Typ[T]] //invariant position! but hey...
     def pos: List[SourceContext] = Nil
   }
 
-  case class Const[+T:Manifest](x: T) extends Exp[T]
+  case class Const[+T:Typ](x: T) extends Exp[T]
 
-  case class Sym[+T:Manifest](val id: Int) extends Exp[T] {
+  case class Sym[+T:Typ](val id: Int) extends Exp[T] {
     var sourceContexts: List[SourceContext] = Nil
     override def pos = sourceContexts
     def withPos(pos: List[SourceContext]) = { sourceContexts :::= pos; this }
@@ -31,9 +68,9 @@ trait Expressions extends Utils {
   case class Variable[+T](val e: Exp[Variable[T]]) // TODO: decide whether it should stay here ... FIXME: should be invariant
 
   var nVars = 0
-  def fresh[T:Manifest]: Sym[T] = Sym[T] { nVars += 1;  if (nVars%1000 == 0) printlog("nVars="+nVars);  nVars -1 }
+  def fresh[T:Typ]: Sym[T] = Sym[T] { nVars += 1;  if (nVars%1000 == 0) printlog("nVars="+nVars);  nVars -1 }
 
-  def fresh[T:Manifest](pos: List[SourceContext]): Sym[T] = fresh[T].withPos(pos)
+  def fresh[T:Typ](pos: List[SourceContext]): Sym[T] = fresh[T].withPos(pos)
 
   def quotePos(e: Exp[Any]): String = e.pos match {
     case Nil => "<unknown>"
@@ -45,48 +82,6 @@ trait Expressions extends Utils {
     cs.map(c => all(c).reverse.map(c => c.fileName.split("/").last + ":" + c.line).mkString("//")).mkString(";")
   }
 
-/*
-  def fresh[T:Manifest] = {
-    val (name, id, nameId) = nextName("x")
-    val sym = Sym[T](id)
-    sym.name = name
-    sym.nameId = nameId
-    sym
-  }
-
-  def fresh[T:Manifest](d: Def[T], ctx: Option[SourceContext]) = {
-    def enclosingNamedContext(sc: SourceContext): Option[SourceContext] = sc.bindings match {
-      case (null, _) :: _ =>
-        if (!sc.parent.isEmpty) enclosingNamedContext(sc.parent.get)
-        else None
-      case (name, line) :: _ =>
-        Some(sc)
-    }
-
-    // create base name from source context
-    val (basename, line, srcCtx) = if (!ctx.isEmpty) {
-      enclosingNamedContext(ctx.get) match {
-        case None =>
-          // no enclosing context has variable assignment
-          var outermost = ctx.get
-          while (!outermost.parent.isEmpty) {
-            outermost = outermost.parent.get
-          }
-          ("x", 0, Some(outermost))
-        case Some(sc) => sc.bindings match {
-          case (n, l) :: _ =>
-            (n, l, Some(sc))
-        }
-      }
-    } else ("x", 0, None)
-    val (name, id, nameId) = nextName(basename)
-    val sym = Sym[T](id)
-    sym.name = name
-    sym.nameId = nameId
-    sym.sourceContext = srcCtx
-    sym
-  }
-*/
 
   abstract class Def[+T] { // operations (composite)
     override final lazy val hashCode = scala.runtime.ScalaRunTime._hashCode(this.asInstanceOf[Product])
@@ -142,7 +137,8 @@ trait Expressions extends Utils {
   def reflectSubGraph(ds: List[Stm]): Unit = {
     val lhs = ds.flatMap(_.lhs)
     assert(lhs.length == lhs.distinct.length, "multiple defs: " + ds)
-    val existing = lhs flatMap (globalDefsCache get _)//globalDefs filter (_.lhs exists (lhs contains _))
+    // equivalent to: globalDefs filter (_.lhs exists (lhs contains _))
+    val existing = lhs flatMap (globalDefsCache get _)
     assert(existing.isEmpty, "already defined: " + existing + " for " + ds)
     localDefs = localDefs ::: ds
     globalDefs = globalDefs ::: ds
@@ -158,12 +154,12 @@ trait Expressions extends Utils {
   def findDefinition[T](d: Def[T]): Option[Stm] =
     globalDefs.find(x => x.defines(d).nonEmpty)
 
-  def findOrCreateDefinition[T:Manifest](d: Def[T], pos: List[SourceContext]): Stm =
+  def findOrCreateDefinition[T:Typ](d: Def[T], pos: List[SourceContext]): Stm =
     findDefinition[T](d) map { x => x.defines(d).foreach(_.withPos(pos)); x } getOrElse {
       createDefinition(fresh[T](pos), d)
     }
 
-  def findOrCreateDefinitionExp[T:Manifest](d: Def[T], pos: List[SourceContext]): Exp[T] =
+  def findOrCreateDefinitionExp[T:Typ](d: Def[T], pos: List[SourceContext]): Exp[T] =
     findOrCreateDefinition(d, pos).defines(d).get
 
   def createDefinition[T](s: Sym[T], d: Def[T]): Stm = {
@@ -173,12 +169,12 @@ trait Expressions extends Utils {
   }
   
 
-  protected implicit def toAtom[T:Manifest](d: Def[T])(implicit pos: SourceContext): Exp[T] = {
+  protected implicit def toAtom[T:Typ](d: Def[T])(implicit pos: SourceContext): Exp[T] = {
     findOrCreateDefinitionExp(d, List(pos)) // TBD: return Const(()) if type is Unit??
   }
 
   object Def {
-    def unapply[T](e: Exp[T]): Option[Def[T]] = e match { // really need to test for sym?
+    def unapply[T](e: Exp[T]): Option[Def[T]] = e match {
       case s @ Sym(_) =>
         findDefinition(s).flatMap(_.defines(s))
       case _ =>
@@ -195,8 +191,9 @@ trait Expressions extends Utils {
     case ss: Iterable[Any] => ss.toList.flatMap(syms(_))
     // All case classes extend Product!
     case p: Product => 
-      //return p.productIterator.toList.flatMap(syms(_))
-      /* performance hotspot */
+      // performance hotspot: this is the same as
+      // p.productIterator.toList.flatMap(syms(_))
+      // but faster
       val iter = p.productIterator
       val out = new ListBuffer[Sym[Any]]
       while (iter.hasNext) {
@@ -238,7 +235,7 @@ trait Expressions extends Utils {
     case _ => Nil
   }
 
-
+  // generic symbol traversal: f is expected to call rsyms again
   def rsyms[T](e: Any)(f: Any=>List[T]): List[T] = e match {
     case s: Sym[Any] => f(s)
     case ss: Iterable[Any] => ss.toList.flatMap(f)
@@ -259,25 +256,6 @@ trait Expressions extends Utils {
   def freqNormal(e: Any) = symsFreq(e)
   def freqHot(e: Any) = symsFreq(e).map(p=>(p._1,p._2*1000.0))
   def freqCold(e: Any) = symsFreq(e).map(p=>(p._1,p._2*0.5))
-
-
-
-/*
-  def symsFreq(e: Any): List[(Sym[Any], Double)] = e match {
-    case s: Sym[Any] => List((s,1.0))
-    case p: Product => p.productIterator.toList.flatMap(symsFreq(_))
-    case _ => Nil
-  }
-*/
-
-/*
-  def symsShare(e: Any): List[(Sym[Any], Int)] = {
-    case s: Sym[Any] => List(s)
-    case p: Product => p.productIterator.toList.flatMap(symsShare(_))
-    case _ => Nil
-  }
-*/
-
 
 
   // bookkeeping

@@ -1,16 +1,17 @@
-package scala.virtualization.lms
+package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.virtualization.lms.internal.GenericNestedCodegen
+import scala.lms.internal.GenericNestedCodegen
 import org.scala_lang.virtualized.SourceContext
+
 
 trait While extends Base {
   def __whileDo(cond: => Rep[Boolean], body: => Rep[Unit])(implicit pos: SourceContext): Rep[Unit]
 }
 
 
-trait WhileExp extends While with EffectExp {
+trait WhileExp extends While with BooleanOps with EffectExp {
   case class While(cond: Block[Boolean], body: Block[Unit]) extends Def[Unit]
 
   override def __whileDo(cond: => Exp[Boolean], body: => Rep[Unit])(implicit pos: SourceContext) = {
@@ -44,8 +45,8 @@ trait WhileExpOptSpeculative extends WhileExp with PreviousIterationDummyExp {
   
   override def __whileDo(cond: => Exp[Boolean], body: => Rep[Unit])(implicit pos: SourceContext) = {
 
-    val pc = fresh[Nothing]
-    val pb = fresh[Nothing]
+    val pc = fresh[Unit]
+    val pb = fresh[Unit]
 
     val c = reifyEffectsHere(cond)
     val ce = summarizeEffects(c)

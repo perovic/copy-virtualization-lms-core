@@ -1,4 +1,4 @@
-package scala.virtualization.lms
+package scala.lms
 package epfl
 package test8
 
@@ -16,11 +16,11 @@ import org.scala_lang.virtualized.SourceContext
 import org.scala_lang.virtualized.virtualize
 
 trait OrderingOpsExpOpt extends OrderingOpsExp {
-  override def ordering_lt[T:Ordering:Manifest](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Rep[Boolean] = (lhs,rhs) match {
+  override def ordering_lt[T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Rep[Boolean] = (lhs,rhs) match {
     case (Const(a), Const(b)) => Const(implicitly[Ordering[T]].lt(a,b))
     case _ => super.ordering_lt(lhs,rhs)
   }
-  override def ordering_gt[T:Ordering:Manifest](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Rep[Boolean] = (lhs,rhs) match {
+  override def ordering_gt[T:Ordering:Typ](lhs: Exp[T], rhs: Exp[T])(implicit pos: SourceContext): Rep[Boolean] = (lhs,rhs) match {
     case (Const(a), Const(b)) => Const(implicitly[Ordering[T]].gt(a,b))
     case _ => super.ordering_gt(lhs,rhs)
   }
@@ -30,8 +30,8 @@ trait OrderingOpsExpOpt extends OrderingOpsExp {
 class TestSpeculative extends FileDiffSuite {
   
   val prefix = home + "test-out/epfl/test8-"
-  
-  trait DSL extends ArrayMutation with VarArith with OrderingOps with BooleanOps with LiftVariables with IfThenElse with While with RangeOps with Print {
+
+  trait DSL extends ArrayMutation with PrimitiveOps with LiftPrimitives with OrderingOps with BooleanOps with LiftVariables with IfThenElse with While with RangeOps with Print {
     def zeros(l: Rep[Int]) = array(l) { i => 0 }
     def mzeros(l: Rep[Int]) = zeros(l).mutable
     implicit class repIntToDouble(x: Rep[Int]) {
@@ -40,12 +40,12 @@ class TestSpeculative extends FileDiffSuite {
 
     def test(x: Rep[Int]): Rep[Unit]
   }
-  trait Impl extends DSL with ArrayMutationExp with ArithExp with OrderingOpsExpOpt with BooleanOpsExp 
-      with EqualExpOpt with VariablesExpOpt 
+  trait Impl extends DSL with ArrayMutationExp with PrimitiveOpsExp with OrderingOpsExpOpt with BooleanOpsExp 
+      with EqualExpOpt with VariablesExpOpt with StringOpsExp
       with IfThenElseExpOpt with WhileExpOptSpeculative with SplitEffectsExpFat with RangeOpsExp with PrintExp 
       with CompileScala { self => 
     override val verbosity = 1
-    val codegen = new ScalaGenArrayMutation with ScalaGenArith with ScalaGenOrderingOps 
+    val codegen = new ScalaGenArrayMutation with ScalaGenPrimitiveOps with ScalaGenOrderingOps 
       with ScalaGenVariables with ScalaGenIfThenElseFat with ScalaGenWhileOptSpeculative with ScalaGenSplitEffects
       with ScalaGenRangeOps with ScalaGenPrint /*with LivenessOpt*/ { val IR: self.type = self }
     codegen.emitSource(test, "Test", new PrintWriter(System.out))
@@ -142,7 +142,7 @@ class TestSpeculative extends FileDiffSuite {
         def test(x: Rep[Int]) = {
           var x = 7
           var c = 0.0
-          while (c < 10) {
+          while (c < 10.0) {
             print(x) // should be const 7
             print(c)
             var z = 2 // should remove var
@@ -166,7 +166,7 @@ class TestSpeculative extends FileDiffSuite {
           var x = 7
           var y = 4.0 // should remove
           var c = 0.0
-          while (c < 10) {
+          while (c < 10.0) {
             print(x) // should be const 7
             print(c)
             var z = 2 // should remove var
@@ -189,7 +189,7 @@ class TestSpeculative extends FileDiffSuite {
       @virtualize trait Prog extends DSL {
         def test(x: Rep[Int]) = {
           var c = 0.0
-          while (c > 10) {
+          while (c > 10.0) {
             print("booooring!")
           }
           print("done")
@@ -203,17 +203,17 @@ class TestSpeculative extends FileDiffSuite {
   def testSpeculative5 = {
     withOutFile(prefix+"speculative5") {
      // test simple copy propagation through variable
-      @virtualize trait Prog extends DSL {
+      @virtualize trait Prog extends DSL with LiftVariables {
         def test(x: Rep[Int]) = {
-          var x = 7
+          var x = 7.0
           var c = 0.0
-          while (c < 10) {
-            if (x < 10)
+          while (c < 10.0) {
+            if (x < 10.0)
               print("test")
             else
               x = c
             print(x)
-            c += 1
+            c += 1.0
           }
           print(x)
         }
@@ -222,5 +222,33 @@ class TestSpeculative extends FileDiffSuite {
     }
     assertFileEqualsCheck(prefix+"speculative5")
   }
+
+  // FIXME: this one breaks. Variable j is lifted to
+  // top scope because it is not part of the mayWrite
+  // summary of the inner loop.
+  def testSpeculative6 = {
+    withOutFile(prefix+"speculative6") {
+      // test simple copy propagation through variable
+      @virtualize trait Prog extends DSL {
+        def test(x: Rep[Int]) = {
+          print("FIXME -- WRONG RESULT")
+          var i = 0
+          while (i < 10) {
+            var j = 0
+            while (j < 10) {
+              print("test")
+              print(i)
+              print(j)
+              j += 1
+            }
+            i += 1
+          }
+        }
+      }
+      new Prog with Impl
+    }
+    assertFileEqualsCheck(prefix+"speculative6")
+  }
+
 
 }

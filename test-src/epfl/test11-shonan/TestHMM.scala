@@ -1,11 +1,11 @@
-package scala.virtualization.lms
+package scala.lms
 package epfl
 package test11
 
 import common._
 import test1._
 import test7._
-import test8.{ArrayMutation,ArrayMutationExp,ScalaGenArrayMutation,OrderingOpsExpOpt}
+import test8.{ArrayMutation,ArrayMutationExp,ScalaGenArrayMutation}
 
 import util.OverloadHack
 
@@ -20,11 +20,13 @@ class TestHMM extends FileDiffSuite {
   
   trait DSL extends LiftNumeric with NumericOps with PrimitiveOps with ArrayOps with RangeOps with BooleanOps 
     with LiftVariables with IfThenElse with Print {
-    def staticData[T:Manifest](x: T): Rep[T]
+    def staticData[T:Typ](x: T): Rep[T]
     def test(x: Rep[Array[Int]]): Rep[Array[Int]]
   }
+
   trait Impl extends DSL with Runner with ArrayOpsExpOpt with NumericOpsExpOpt with PrimitiveOpsExpOpt with PrimitiveOpsExp with OrderingOpsExpOpt with BooleanOpsExp 
       with EqualExpOpt with VariablesExpOpt with RangeOpsExp with StaticDataExp
+      with StringOpsExp with SeqOpsExp
       with IfThenElseExpOpt with PrintExp 
       with CompileScala { self => 
     //override val verbosity = 1
@@ -37,7 +39,7 @@ class TestHMM extends FileDiffSuite {
 
 
   // test case input data
-  trait Runner extends Compile {
+  trait Runner extends Compile with PrimitiveOps with ArrayOps {
     def test(x: Rep[Array[Int]]): Rep[Array[Int]]
     def run() {
       val f = compile(test)
@@ -137,7 +139,7 @@ class TestHMM extends FileDiffSuite {
         }
       }
       new Prog with Impl {
-        override def array_apply[T:Manifest](x: Exp[Array[T]], n: Exp[Int])(implicit pos: SourceContext): Exp[T] = (x,n) match {
+        override def array_apply[T:Typ](x: Exp[Array[T]], n: Exp[Int])(implicit pos: SourceContext): Exp[T] = (x,n) match {
           case (Def(StaticData(x:Array[T])), Const(n)) => Const(x(n))
           case _ => super.array_apply(x,n)
         }        

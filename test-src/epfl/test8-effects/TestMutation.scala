@@ -1,4 +1,4 @@
-package scala.virtualization.lms
+package scala.lms
 package epfl
 package test8
 
@@ -12,30 +12,41 @@ import util.OverloadHack
 import java.io.{PrintWriter,StringWriter,FileOutputStream}
 
 import org.scala_lang.virtualized.virtualize
+import org.scala_lang.virtualized.SourceContext
 
 /*
   if there's a crash here during compilation, it's likely due to #4363 (need latest scala-virtualized for fix)
 */
 
-trait ArrayMutation extends ArrayLoops {
 
-  implicit def repArrayMutationOps[T:Manifest](a: Rep[Array[T]]) = new clsArrayMutationOps(a)
-  class clsArrayMutationOps[T:Manifest](a: Rep[Array[T]]) {
+trait ArrayMutation extends ArrayLoops with PrimitiveOps {
+
+  implicit def repArrayMutationOps[T:Typ](a: Rep[Array[T]]) = new clsArrayMutationOps(a)
+  class clsArrayMutationOps[T:Typ](a: Rep[Array[T]]) {
     def update(i: Rep[Int], x: Rep[T]): Rep[Unit] = infix_update(a, i, x)
     def mutable: Rep[Array[T]] = infix_mutable(a)
     def copy: Rep[Array[T]] = infix_copy(a)
   }
   
-  def infix_update[T:Manifest](a: Rep[Array[T]], i: Rep[Int], x: Rep[T]): Rep[Unit]
-  def infix_mutable[T:Manifest](a: Rep[Array[T]]): Rep[Array[T]]
+  def infix_update[T:Typ](a: Rep[Array[T]], i: Rep[Int], x: Rep[T]): Rep[Unit]
+  def infix_mutable[T:Typ](a: Rep[Array[T]]): Rep[Array[T]]
+  def infix_copy[T:Typ](a: Rep[Array[T]]): Rep[Array[T]]
+//=======
+//trait ArrayMutation extends ArrayLoops {
+//
 
-  // NOTE(trans): renamed clone to copy to avoid clash with built-in clone.
-  // TODO(trans): The new scala-virtualized virtualizes clone, but we get error messages like:
-  //[error] Note that Rep is unbounded, which means AnyRef is not a known parent.
-  //[error] Such types can participate in value classes, but instances
-  //[error] cannot appear in singleton types or in reference comparisons.
-  //[error]             a = b.clone
-  def infix_copy[T:Manifest](a: Rep[Array[T]]): Rep[Array[T]]
+//
+//  def infix_update[T:Manifest](a: Rep[Array[T]], i: Rep[Int], x: Rep[T]): Rep[Unit]
+//  def infix_mutable[T:Manifest](a: Rep[Array[T]]): Rep[Array[T]]
+//
+//  // NOTE(trans): renamed clone to copy to avoid clash with built-in clone.
+//  // TODO(trans): The new scala-virtualized virtualizes clone, but we get error messages like:
+//  //[error] Note that Rep is unbounded, which means AnyRef is not a known parent.
+//  //[error] Such types can participate in value classes, but instances
+//  //[error] cannot appear in singleton types or in reference comparisons.
+//  //[error]             a = b.clone
+//  def infix_copy[T:Manifest](a: Rep[Array[T]]): Rep[Array[T]]
+//>>>>>>> macro-trans
   
 }
 
@@ -43,20 +54,20 @@ trait ArrayMutation extends ArrayLoops {
 //   don't chain with each other.
 // TODO(trans): can we get back the nice chaining behavior?
 trait LiftArrayReads extends ReadVarImplicit { this: Variables with ArrayLoops with ArrayMutation =>
-  implicit def liftReadsArrayLoops(v: Var[Array[Double]]) = repArrayOps(readVar(v))
-  implicit def liftReadsArrayMutation(v: Var[Array[Double]]) = repArrayMutationOps(readVar(v))
+  implicit def liftReadsArrayLoops(v: Var[Array[Int]]) = repArrayOps(readVar(v))
+  implicit def liftReadsArrayMutation(v: Var[Array[Int]]) = repArrayMutationOps(readVar(v))
 }
 
-trait ArrayMutationExp extends ArrayMutation with ArrayLoopsExp {
+trait ArrayMutationExp extends ArrayMutation with PrimitiveOpsExp with ArrayLoopsExp {
   
   case class ArrayUpdate[T](a: Rep[Array[T]], i: Rep[Int], x: Rep[T]) extends Def[Unit]
   case class ArrayMutable[T](a: Rep[Array[T]]) extends Def[Array[T]]
   case class ArrayClone[T](a: Rep[Array[T]]) extends Def[Array[T]]
   
-  def infix_update[T:Manifest](a: Rep[Array[T]], i: Rep[Int], x: Rep[T]) = reflectWrite(a)(ArrayUpdate(a,i,x))
+  def infix_update[T:Typ](a: Rep[Array[T]], i: Rep[Int], x: Rep[T]) = reflectWrite(a)(ArrayUpdate(a,i,x))
 
-  def infix_mutable[T:Manifest](a: Rep[Array[T]]) = reflectMutable(ArrayMutable(a))
-  def infix_copy[T:Manifest](a: Rep[Array[T]]) = ArrayClone(a)
+  def infix_mutable[T:Typ](a: Rep[Array[T]]) = reflectMutable(ArrayMutable(a))
+  def infix_copy[T:Typ](a: Rep[Array[T]]) = ArrayClone(a)
   
   override def aliasSyms(e: Any): List[Sym[Any]] = e match {
     case SimpleLoop(s,i, ArrayElem(y)) => Nil
@@ -64,7 +75,7 @@ trait ArrayMutationExp extends ArrayMutation with ArrayLoopsExp {
     case SimpleLoop(s,i, ArrayIfElem(c,y)) => Nil
     case SimpleLoop(s,i, ReduceIfElem(c,y)) => syms(y) // could also return zero value
     case ArrayIndex(a,i) => Nil
-    case ArrayLength(a) => Nil
+    case ArrayLen(a) => Nil
     case ArrayUpdate(a,i,x) => Nil // syms(a) <-- any use to return a?
     case ArrayMutable(a) => Nil
     case ArrayClone(a) => Nil
@@ -77,7 +88,7 @@ trait ArrayMutationExp extends ArrayMutation with ArrayLoopsExp {
     case SimpleLoop(s,i, ArrayIfElem(c,y)) => syms(y)
     case SimpleLoop(s,i, ReduceIfElem(c,y)) => Nil
     case ArrayIndex(a,i) => Nil
-    case ArrayLength(a) => Nil
+    case ArrayLen(a) => Nil
     case ArrayUpdate(a,i,x) => syms(x)
     case ArrayMutable(a) => Nil
     case ArrayClone(a) => Nil
@@ -90,7 +101,7 @@ trait ArrayMutationExp extends ArrayMutation with ArrayLoopsExp {
     case SimpleLoop(s,i, ArrayIfElem(c,y)) => Nil
     case SimpleLoop(s,i, ReduceIfElem(c,y)) => Nil
     case ArrayIndex(a,i) => syms(a)
-    case ArrayLength(a) => Nil
+    case ArrayLen(a) => Nil
     case ArrayUpdate(a,i,x) => Nil
     case ArrayMutable(a) => Nil
     case ArrayClone(a) => Nil
@@ -103,7 +114,7 @@ trait ArrayMutationExp extends ArrayMutation with ArrayLoopsExp {
     case SimpleLoop(s,i, ArrayIfElem(c,y)) => Nil
     case SimpleLoop(s,i, ReduceIfElem(c,y)) => Nil
     case ArrayIndex(a,i) => Nil
-    case ArrayLength(a) => Nil
+    case ArrayLen(a) => Nil
     case ArrayUpdate(a,i,x) => syms(a)
     case ArrayMutable(a) => syms(a)
     case ArrayClone(a) => syms(a)
@@ -128,15 +139,12 @@ trait ScalaGenArrayMutation extends ScalaGenArrayLoops {
   }
 }
 
-
-
-
-
 class TestMutation extends FileDiffSuite {
   
   val prefix = home + "test-out/epfl/test8-"
   
-  trait DSL extends ArrayMutation with VarArith with OrderingOps with IfThenElse with While with RangeOps with Print {
+//FIXME  trait DSL extends ArrayMutation with PrimitiveOps with LiftPrimitives with OrderingOps with Variables with IfThenElse with While with RangeOps with Print {
+  trait DSL extends ArrayMutation with PrimitiveOps with LiftPrimitives with Variables with OrderingOps with IfThenElse with While with RangeOps with Print {
     def zeros(l: Rep[Int]) = array(l) { i => 0 }
     def mzeros(l: Rep[Int]) = zeros(l).mutable
     implicit class repIntToDouble(x: Rep[Int]) {
@@ -145,10 +153,11 @@ class TestMutation extends FileDiffSuite {
 
     def test(x: Rep[Int]): Rep[Unit]
   }
-  trait Impl extends DSL with ArrayMutationExp with ArithExp with OrderingOpsExp with VariablesExp 
+  trait Impl extends DSL with ArrayMutationExp with PrimitiveOpsExp with OrderingOpsExp with VariablesExp 
+      with BooleanOpsExp with StringOpsExp
       with IfThenElseExp with WhileExp with RangeOpsExp with PrintExp { self => 
     override val verbosity = 2
-    val codegen = new ScalaGenArrayMutation with ScalaGenArith with ScalaGenOrderingOps 
+    val codegen = new ScalaGenArrayMutation with ScalaGenPrimitiveOps with ScalaGenOrderingOps 
       with ScalaGenVariables with ScalaGenIfThenElse with ScalaGenWhile with ScalaGenRangeOps 
       with ScalaGenPrint { val IR: self.type = self }
     codegen.emitSource(test, "Test", new PrintWriter(System.out))
@@ -224,7 +233,7 @@ class TestMutation extends FileDiffSuite {
       @virtualize trait Prog extends DSL with LiftVariables with LiftArrayReads {
         def test(x: Rep[Int]) = {
           var a = zeros(100)
-          val b = mzeros(100)
+          val b:Rep[Array[Int]] = mzeros(100)
           for (i <- 0 until b.length) { // this is also a curious case: range creation must not be reflected
             val x1 = a.at(i)
             b.update(i,8)
@@ -371,7 +380,7 @@ class TestMutation extends FileDiffSuite {
             c = c + 1
           }
           if (c < x)
-            c = 8
+            c = 8.0
           print(c)
         }
       }

@@ -1,4 +1,4 @@
-package scala.virtualization.lms
+package scala.lms
 package epfl
 package test7
 
@@ -11,6 +11,7 @@ import java.io.{PrintWriter,StringWriter,FileOutputStream}
 import org.scala_lang.virtualized.SourceContext
 
 trait Print extends Base {
+  implicit def stringTyp: Typ[String]
   implicit def unit(s: String): Rep[String]
   def print(s: Rep[Any]): Rep[Unit]
 }
@@ -19,11 +20,11 @@ trait PrintExp extends Print with EffectExp {
   implicit def unit(s: String): Rep[String] = Const(s)
   case class Print(s: Rep[Any]) extends Def[Unit]
   def print(s: Rep[Any]) = reflectEffect(Print(s))
-  override def mirrorDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
+  override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
     case Print(s) => Print(f(s))
     case _ => super.mirrorDef(e,f)
   }).asInstanceOf[Def[A]] // why??
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
     case Reflect(Print(s), u, es) => reflectMirrored(Reflect(Print(f(s)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]] // why??
@@ -215,14 +216,11 @@ trait ScalaGenPrint extends ScalaGenEffect {
       - if loops are unrelated (no interdeps) in the modified graph they can be fused!
       - strongly connected components cannot be fused internally (they are sequential), only externally
       - 
+
 */
-
-
 
 class TestAnalysis extends FileDiffSuite {
   
   val prefix = home + "test-out/epfl/test7-"
-  
 
-  
 }

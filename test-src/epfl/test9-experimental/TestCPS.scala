@@ -1,4 +1,4 @@
-package scala.virtualization.lms
+package scala.lms
 package epfl
 package test9
 
@@ -17,9 +17,9 @@ import java.io.{PrintWriter,StringWriter,FileOutputStream}
 import org.scala_lang.virtualized.virtualize
 
 @virtualize
-trait CpsProg1 extends Arith with IfThenElse with Equal with Print with Compile {
-  
-  def choose[A:Manifest](x: Rep[Boolean]): Boolean @cps[Rep[A]] = shift { k: (Boolean => Rep[A]) =>
+trait CpsProg1 extends LiftPrimitives with PrimitiveOps with IfThenElse with Equal with Print with Compile {
+
+  def choose[A:Typ](x: Rep[Boolean]): Boolean @cps[Rep[A]] = shift { k: (Boolean => Rep[A]) =>
     if (x)
       k(true)
     else
@@ -40,9 +40,9 @@ trait CpsProg1 extends Arith with IfThenElse with Equal with Print with Compile 
 }
 
 @virtualize
-trait CpsProg2 extends Arith with IfThenElse with Equal with Print with Compile {
-  
-  def choose[A:Manifest](x: Rep[Boolean]): Boolean @cps[Rep[A]] = shift { k: (Boolean => Rep[A]) =>
+trait CpsProg2 extends LiftPrimitives with PrimitiveOps with IfThenElse with Equal with Print with Compile {
+
+  def choose[A:Typ](x: Rep[Boolean]): Boolean @cps[Rep[A]] = shift { k: (Boolean => Rep[A]) =>
     if (x)
       k(true)
     else
@@ -50,7 +50,7 @@ trait CpsProg2 extends Arith with IfThenElse with Equal with Print with Compile 
   }
   
   
-  def pickValue[A:Manifest](x: Rep[Boolean]): Rep[Int] @cps[Rep[A]] = { 
+  def pickValue[A:Typ](x: Rep[Boolean]): Rep[Int] @cps[Rep[A]] = { 
     val c = choose[A](x)
     if (c) 
       unit(7) 
@@ -68,9 +68,9 @@ trait CpsProg2 extends Arith with IfThenElse with Equal with Print with Compile 
 }
 
 @virtualize
-trait AmbProg1 extends Arith with IfThenElse with Equal with Print with Compile {
-  
-  //def __ifThenElse[T:Manifest,U](cond: Rep[Boolean], thenp: => Rep[T]@cps[U], elsep: => Rep[T]@cps[U]): Rep[T]@cps[U] = cond match { case true => thenp case false => elsep }
+trait AmbProg1 extends LiftPrimitives with PrimitiveOps with IfThenElse with Equal with Print with Compile {
+
+  //def __ifThenElse[T:Typ,U](cond: Rep[Boolean], thenp: => Rep[T]@cps[U], elsep: => Rep[T]@cps[U]): Rep[T]@cps[U] = cond match { case true => thenp case false => elsep }
   
   
   // xs could be either Rep[List[T]] or List[Rep[T]]
@@ -165,8 +165,8 @@ class TestCPS extends FileDiffSuite {
   
   def testCps1 = {
     withOutFile(prefix+"cps1") {
-      new CpsProg1 with ArithExp with EqualExp with IfThenElseExp with PrintExp with ScalaCompile { self =>
-        val codegen = new ScalaGenArith with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
+      new CpsProg1 with CoreOpsPkgExp with EqualExp with IfThenElseExp with PrintExp with ScalaCompile { self =>
+        val codegen = new ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
         //override def compile
         codegen.emitSource(test, "Test", new PrintWriter(System.out))
       }
@@ -176,8 +176,8 @@ class TestCPS extends FileDiffSuite {
 
   def testCps2 = {
     withOutFile(prefix+"cps2") {
-      new CpsProg2 with ArithExp with EqualExp with IfThenElseExp with PrintExp with ScalaCompile { self =>
-        val codegen = new ScalaGenArith with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
+      new CpsProg2 with CoreOpsPkgExp with EqualExp with IfThenElseExp with PrintExp with ScalaCompile { self =>
+        val codegen = new ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
         //override def compile
         codegen.emitSource(test, "Test", new PrintWriter(System.out))
       }
@@ -187,8 +187,8 @@ class TestCPS extends FileDiffSuite {
  
   def testAmb1a = {
     withOutFile(prefix+"amb1a") {
-      new AmbProg1 with ArithExp with EqualExp with IfThenElseExp with PrintExp with ScalaCompile { self =>
-        val codegen = new ScalaGenArith with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
+      new AmbProg1 with CoreOpsPkgExp with EqualExp with IfThenElseExp with PrintExp with ScalaCompile { self =>
+        val codegen = new ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
         //override def compile
         codegen.emitSource(test, "Test", new PrintWriter(System.out))
       }
@@ -198,8 +198,8 @@ class TestCPS extends FileDiffSuite {
   
   def testAmb1b = {
     withOutFile(prefix+"amb1b") {
-      new AmbProg1 with ArithExp with EqualExpOpt with IfThenElseExpOpt with BooleanOpsExp with PrintExp with ScalaCompile { self =>
-        val codegen = new ScalaGenArith with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
+      new AmbProg1 with CoreOpsPkgExp with EqualExpOpt with IfThenElseExpOpt with BooleanOpsExp with PrintExp with ScalaCompile { self =>
+        val codegen = new ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
         //override def compile
         codegen.emitSource(test, "Test", new PrintWriter(System.out))
       }
@@ -209,8 +209,8 @@ class TestCPS extends FileDiffSuite {
 
   def testAmb2a = {
     withOutFile(prefix+"amb2a") {
-      new AmbProg2 with ArithExp with EqualExp with IfThenElseExp with PrintExp with ScalaCompile { self =>
-        val codegen = new ScalaGenArith with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
+      new AmbProg2 with CoreOpsPkgExp with EqualExp with IfThenElseExp with PrintExp with ScalaCompile { self =>
+        val codegen = new ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
         //override def compile
         codegen.emitSource(test, "Test", new PrintWriter(System.out))
       }
@@ -220,8 +220,8 @@ class TestCPS extends FileDiffSuite {
   
   def testAmb2b = {
     withOutFile(prefix+"amb2b") {
-      new AmbProg2 with ArithExp with EqualExpOpt with IfThenElseExpOpt with BooleanOpsExp with PrintExp with ScalaCompile { self =>
-        val codegen = new ScalaGenArith with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
+      new AmbProg2 with CoreOpsPkgExp with EqualExpOpt with IfThenElseExpOpt with BooleanOpsExp with PrintExp with ScalaCompile { self =>
+        val codegen = new ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenPrint { val IR: self.type = self }
         //override def compile
         codegen.emitSource(test, "Test", new PrintWriter(System.out))
       }

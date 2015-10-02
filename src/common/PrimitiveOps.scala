@@ -1,9 +1,9 @@
-package scala.virtualization.lms
+package scala.lms
 package common
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.util.OverloadHack
+import scala.lms.util.OverloadHack
 import org.scala_lang.virtualized.SourceContext
 
 trait LiftPrimitives {
@@ -13,6 +13,10 @@ trait LiftPrimitives {
   implicit def floatToRepFloat(x: Float) = unit(x)
   implicit def doubleToRepDouble(x: Double) = unit(x)
   implicit def longToRepLong(x: Long) = unit(x)
+
+  // precision-widening promotions
+  implicit def chainIntToRepFloat[A:Typ](x: A)(implicit c: A => Rep[Int]): Rep[Float] = repIntToRepFloat(c(x))
+  implicit def chainFloatToRepDouble[A:Typ](x: A)(implicit c: A => Rep[Float]): Rep[Double] = repFloatToRepDouble(c(x))
 }
 
 /**
@@ -23,6 +27,14 @@ trait LiftPrimitives {
 trait PrimitiveOps extends Variables with OverloadHack {
   this: ImplicitOps =>
 
+  implicit def byteTyp: Typ[Byte]
+  implicit def charTyp: Typ[Char]
+  implicit def shortTyp: Typ[Short]
+  implicit def intTyp: Typ[Int]
+  implicit def longTyp: Typ[Long]
+  implicit def floatTyp: Typ[Float]
+  implicit def doubleTyp: Typ[Double]
+
   /**
    * Primitive conversions
    */
@@ -32,6 +44,7 @@ trait PrimitiveOps extends Variables with OverloadHack {
   implicit def repFloatToRepDouble(x: Rep[Float]): Rep[Double] = x.toDouble
   implicit def repLongToRepFloat(x: Rep[Long]): Rep[Float] = x.toFloat
   implicit def repLongToRepDouble(x: Rep[Long]): Rep[Double] = x.toDouble
+  implicit def repCharToRepInt(x: Rep[Char]): Rep[Int] = x.toInt
 
 
   /**
@@ -511,6 +524,17 @@ trait PrimitiveOps extends Variables with OverloadHack {
   def int_rightshiftarith(lhs: Rep[Int], rhs: Rep[Int])(implicit pos: SourceContext): Rep[Int]
   def int_rightshiftlogical(lhs: Rep[Int], rhs: Rep[Int])(implicit pos: SourceContext): Rep[Int]
 
+  /**
+   * Char
+   */
+
+  implicit def charToCharOps(self: Rep[Char]) = new CharOpsCls(self)
+
+  class CharOpsCls(self: Rep[Char])(implicit pos: SourceContext) {
+    def toInt(implicit pos: SourceContext) = char_toInt(self)
+  }
+
+  def char_toInt(lhs: Rep[Char])(implicit pos: SourceContext): Rep[Int]
 
   /**
    * Long
@@ -608,6 +632,14 @@ trait PrimitiveOps extends Variables with OverloadHack {
 trait PrimitiveOpsExp extends PrimitiveOps with EffectExp {
   this: ImplicitOps =>
 
+  implicit def byteTyp: Typ[Byte] = manifestTyp
+  implicit def charTyp: Typ[Char] = manifestTyp
+  implicit def shortTyp: Typ[Short] = manifestTyp
+  implicit def intTyp: Typ[Int] = manifestTyp
+  implicit def longTyp: Typ[Long] = manifestTyp
+  implicit def floatTyp: Typ[Float] = manifestTyp
+  implicit def doubleTyp: Typ[Double] = manifestTyp
+
   /**
    * Double
    */
@@ -696,6 +728,13 @@ trait PrimitiveOpsExp extends PrimitiveOps with EffectExp {
   def int_rightshiftarith(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext) = IntShiftRightArith(lhs, rhs)
   def int_rightshiftlogical(lhs: Exp[Int], rhs: Exp[Int])(implicit pos: SourceContext) = IntShiftRightLogical(lhs, rhs)
 
+  /**
+   * Char
+   */
+
+  case class CharToInt(lhs: Exp[Char]) extends Def[Int]
+
+  def char_toInt(lhs: Exp[Char])(implicit pos: SourceContext) = CharToInt(lhs) //toAtom(
 
   /**
    * Long
@@ -735,7 +774,7 @@ trait PrimitiveOpsExp extends PrimitiveOps with EffectExp {
   def long_times(lhs: Exp[Long], rhs: Exp[Long])(implicit pos: SourceContext) : Exp[Long] = LongTimes(lhs, rhs)
   def long_divide(lhs: Exp[Long], rhs: Exp[Long])(implicit pos: SourceContext) : Exp[Long] = LongDivide(lhs, rhs)
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = ({
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = ({
     implicit var a: Numeric[A] = null // hack!! need to store it in Def instances??
     e match {
       case ObjDoublePositiveInfinity() => obj_double_positive_infinity
@@ -971,6 +1010,7 @@ trait ScalaGenPrimitiveOps extends ScalaGenBase {
     case IntToLong(lhs) => emitValDef(sym, quote(lhs) + ".toLong")
     case IntToFloat(lhs) => emitValDef(sym, quote(lhs) + ".toFloat")
     case IntToDouble(lhs) => emitValDef(sym, quote(lhs) + ".toDouble")
+    case CharToInt(lhs) => emitValDef(sym, quote(lhs) + ".toInt")
     case ObjLongMaxValue() => emitValDef(sym, "scala.Long.MaxValue")
     case ObjLongMinValue() => emitValDef(sym, "scala.Long.MinValue")
     case LongBinaryOr(lhs,rhs) => emitValDef(sym, quote(lhs) + " | " + quote(rhs))

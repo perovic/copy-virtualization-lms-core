@@ -1,4 +1,4 @@
-package scala.virtualization.lms
+package scala.lms
 package epfl
 package test7
 
@@ -10,30 +10,33 @@ import internal.AbstractSubstTransformer
 
 import util.OverloadHack
 import org.scala_lang.virtualized.SourceContext
-import java.io.{PrintWriter,StringWriter,FileOutputStream}
+import java.io.{PrintWriter, StringWriter, FileOutputStream}
 
 
 
-trait ArrayLoops extends Loops with OverloadHack {
-  def array[T:Manifest](shape: Rep[Int])(f: Rep[Int] => Rep[T]): Rep[Array[T]]
+trait ArrayLoops extends Loops with OverloadHack { this: PrimitiveOps =>
+  implicit def arrayTyp[T:Typ]: Typ[Array[T]]
+
+  def array[T:Typ](shape: Rep[Int])(f: Rep[Int] => Rep[T]): Rep[Array[T]]
   def sum(shape: Rep[Int])(f: Rep[Int] => Rep[Double]): Rep[Double] // TODO: make reduce operation configurable!
-  def arrayIf[T:Manifest](shape: Rep[Int])(f: Rep[Int] => (Rep[Boolean],Rep[T])): Rep[Array[T]]
+  def arrayIf[T:Typ](shape: Rep[Int])(f: Rep[Int] => (Rep[Boolean],Rep[T])): Rep[Array[T]]
   def sumIf(shape: Rep[Int])(f: Rep[Int] => (Rep[Boolean],Rep[Double])): Rep[Double] // TODO: make reduce operation configurable!
-  def flatten[T:Manifest](shape: Rep[Int])(f: Rep[Int] => Rep[Array[T]]): Rep[Array[T]]
+  def flatten[T:Typ](shape: Rep[Int])(f: Rep[Int] => Rep[Array[T]]): Rep[Array[T]]
 
-  implicit def repArrayOps[T:Manifest](a: Rep[Array[T]]) = new clsRepArrayOps(a)
-  class clsRepArrayOps[T:Manifest](a: Rep[Array[T]]) {
+  implicit def repArrayOps[T:Typ](a: Rep[Array[T]]) = new clsRepArrayOps(a)
+  class clsRepArrayOps[T:Typ](a: Rep[Array[T]]) {
     def at(i: Rep[Int]): Rep[T] = infix_at(a, i)
     def length: Rep[Int] = infix_length(a)
   }
 
-  def infix_at[T:Manifest](a: Rep[Array[T]], i: Rep[Int]): Rep[T]
-  def infix_length[T:Manifest](a: Rep[Array[T]]): Rep[Int]
+  def infix_at[T:Typ](a: Rep[Array[T]], i: Rep[Int]): Rep[T]
+  def infix_length[T:Typ](a: Rep[Array[T]]): Rep[Int]
 }
 
 
-trait ArrayLoopsExp extends LoopsExp {
-  
+trait ArrayLoopsExp extends LoopsExp { this: PrimitiveOpsExp =>
+  implicit def arrayTyp[T:Typ]: Typ[Array[T]] = typ[T].arrayTyp
+
   case class ArrayElem[T](y: Block[T]) extends Def[Array[T]]
   case class ReduceElem(y: Block[Double]) extends Def[Double]
 
@@ -43,9 +46,9 @@ trait ArrayLoopsExp extends LoopsExp {
   case class FlattenElem[T](y: Block[Array[T]]) extends Def[Array[T]]
 
   case class ArrayIndex[T](a: Rep[Array[T]], i: Rep[Int]) extends Def[T]  
-  case class ArrayLength[T](a: Rep[Array[T]]) extends Def[Int]
+  case class ArrayLen[T](a: Rep[Array[T]]) extends Def[Int]
   
-  def array[T:Manifest](shape: Rep[Int])(f: Rep[Int] => Rep[T]): Rep[Array[T]] = {
+  def array[T:Typ](shape: Rep[Int])(f: Rep[Int] => Rep[T]): Rep[Array[T]] = {
     val x = fresh[Int]
     val y = reifyEffects(f(x))
     simpleLoop(shape, x, ArrayElem(y))
@@ -57,7 +60,7 @@ trait ArrayLoopsExp extends LoopsExp {
     simpleLoop(shape, x, ReduceElem(y))
   }
 
-  def arrayIf[T:Manifest](shape: Rep[Int])(f: Rep[Int] => (Rep[Boolean],Rep[T])): Rep[Array[T]] = {
+  def arrayIf[T:Typ](shape: Rep[Int])(f: Rep[Int] => (Rep[Boolean],Rep[T])): Rep[Array[T]] = {
     val x = fresh[Int]
     //val (c,y) = f(x)
     var c: Rep[Boolean] = null
@@ -73,18 +76,17 @@ trait ArrayLoopsExp extends LoopsExp {
     simpleLoop(shape, x, ReduceIfElem(c,y)) // TODO: simplify for const true/false
   }
 
-  def flatten[T:Manifest](shape: Rep[Int])(f: Rep[Int] => Rep[Array[T]]): Rep[Array[T]] = {
+  def flatten[T:Typ](shape: Rep[Int])(f: Rep[Int] => Rep[Array[T]]): Rep[Array[T]] = {
     val x = fresh[Int]
     val y = reifyEffects(f(x))
     simpleLoop(shape, x, FlattenElem(y))
   }
 
+  def infix_at[T:Typ](a: Rep[Array[T]], i: Rep[Int]): Rep[T] = ArrayIndex(a, i)
 
-  def infix_at[T:Manifest](a: Rep[Array[T]], i: Rep[Int]): Rep[T] = ArrayIndex(a, i)
-
-  def infix_length[T:Manifest](a: Rep[Array[T]]): Rep[Int] = a match {
+  def infix_length[T:Typ](a: Rep[Array[T]]): Rep[Int] = a match {
     case Def(SimpleLoop(s, x, ArrayElem(y))) => s
-    case _ => ArrayLength(a)
+    case _ => ArrayLen(a)
   }
 
 
@@ -96,15 +98,20 @@ trait ArrayLoopsExp extends LoopsExp {
   }
 
 
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
     case SimpleLoop(s,i, ArrayElem(y)) if f.hasContext => 
-      array(f(s)) { j => f.asInstanceOf[AbstractSubstTransformer{val IR:ArrayLoopsExp.this.type}].withSubstScope(i -> j) { f.reflectBlock(y) } }
+      implicit def anyTyp: Typ[Any] = ManifestTyp(implicitly) // FIXME: wrong type
+      array(f(s)) { j => 
+        f.asInstanceOf[AbstractSubstTransformer{val IR:ArrayLoopsExp.this.type}].withSubstScope(i -> j) { 
+          f.reflectBlock(y)
+        } 
+      }
     case ArrayIndex(a,i) => infix_at(f(a), f(i))(mtype(manifest[A]))
-    case ArrayLength(a) => infix_length(f(a))(mtype(manifest[A]))
+    case ArrayLen(a) => infix_length(f(a))(mtype(manifest[A]))
     case _ => super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
 
-  override def mirrorFatDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
+  override def mirrorFatDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
     case ArrayElem(y) => ArrayElem(f(y))
     case ReduceElem(y) => ReduceElem(f(y))
     case ArrayIfElem(c,y) => ArrayIfElem(f(c),f(y))
@@ -115,7 +122,7 @@ trait ArrayLoopsExp extends LoopsExp {
 
 }
 
-trait ArrayLoopsFatExp extends ArrayLoopsExp with LoopsFatExp
+trait ArrayLoopsFatExp extends ArrayLoopsExp with LoopsFatExp { this: PrimitiveOpsExp => }
 
 
 
@@ -143,7 +150,7 @@ trait ScalaGenArrayLoops extends ScalaGenLoops {
       stream.println("}")
     case ArrayIndex(a,i) =>  
       emitValDef(sym, quote(a) + ".apply(" + quote(i) + ")")
-    case ArrayLength(a) =>  
+    case ArrayLen(a) =>  
       emitValDef(sym, quote(a) + ".length")
     case _ => super.emitNode(sym, rhs)
   }
@@ -158,15 +165,15 @@ trait ScalaGenArrayLoopsFat extends ScalaGenArrayLoops with ScalaGenLoopsFat {
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
-            stream.println("var " + quote(l) + " = new Array[" + getBlockResult(y).tp + "]("+quote(s)+")")
+            stream.println("var " + quote(l) + " = new Array[" + remap(getBlockResult(y).tp) + "]("+quote(s)+")")
           case ReduceElem(y) =>
-            stream.println("var " + quote(l) + " = 0")
+            stream.println("var " + quote(l) + ": " + remap(getBlockResult(y).tp) + " = 0")
           case ArrayIfElem(c,y) =>
-            stream.println("var " + quote(l) + " = new ArrayBuilder[" + getBlockResult(y).tp + "]")
+            stream.println("var " + quote(l) + " = new ArrayBuilder[" + remap(getBlockResult(y).tp) + "]")
           case ReduceIfElem(c,y) =>
-            stream.println("var " + quote(l) + " = 0")
+            stream.println("var " + quote(l) + ": " + remap(getBlockResult(y).tp) + " = 0")
           case FlattenElem(y) =>
-            stream.println("var " + quote(l) + " = new ArrayBuilder[" + getBlockResult(y).tp + "]")
+            stream.println("var " + quote(l) + " = new ArrayBuilder[" + remap(getBlockResult(y).tp) + "]")
         }
       }
       val ii = x // was: x(i)
@@ -197,14 +204,8 @@ trait ScalaGenArrayLoopsFat extends ScalaGenArrayLoops with ScalaGenLoopsFat {
   }
 }
 
-
-
-
-
-
-
-
-trait Arrays extends Base with OverloadHack {
+trait Arrays extends Base with PrimitiveOps with OverloadHack {
+  implicit def arrayTyp[T:Typ]: Typ[Array[T]]
   def zeroes(n: Rep[Int]): Rep[Array[Int]]
   implicit class ArraysInfixRepArrayInt(a: Rep[Array[Int]]) {
     def update(x: Rep[Int], v: Rep[Int]): Rep[Array[Int]] = infix_update(a, x, v)
@@ -214,12 +215,13 @@ trait Arrays extends Base with OverloadHack {
   def infix_+(a: Rep[Array[Int]], b: Rep[Array[Int]])(implicit o: Overloaded1): Rep[Array[Int]]
 }
 
-trait ArraysExp extends Arrays with EffectExp {
+trait ArraysExp extends Arrays with PrimitiveOpsExp with EffectExp {
+  implicit def arrayTyp[T:Typ]: Typ[Array[T]] = typ[T].arrayTyp
   case class ArrayZero(n: Rep[Int]) extends Def[Array[Int]]
-  case class ArrayUpdate(a: Rep[Array[Int]], x: Rep[Int], v: Rep[Int]) extends Def[Array[Int]]
+  case class ArrayWrite(a: Rep[Array[Int]], x: Rep[Int], v: Rep[Int]) extends Def[Array[Int]]
   case class ArrayPlus(a: Rep[Array[Int]], b: Rep[Array[Int]]) extends Def[Array[Int]]
   def zeroes(n: Rep[Int]) = ArrayZero(n)
-  def infix_update(a: Rep[Array[Int]], x: Rep[Int], v: Rep[Int]) = ArrayUpdate(a,x,v)
+  def infix_update(a: Rep[Array[Int]], x: Rep[Int], v: Rep[Int]) = ArrayWrite(a,x,v)
   def infix_+(a: Rep[Array[Int]], b: Rep[Array[Int]])(implicit o: Overloaded1) = ArrayPlus(a,b)
 }
 
@@ -230,7 +232,7 @@ trait ScalaGenArrays extends ScalaGenEffect {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ArrayZero(n) =>  
       emitValDef(sym, "new Array[Int](" + quote(n) + ")")
-    case ArrayUpdate(a,x,v) =>  
+    case ArrayWrite(a,x,v) =>  
       emitValDef(sym, quote(a) +".clone()")
       stream.println(quote(sym) + "(" + quote(x) + ") = " + quote(v))
     case ArrayPlus(a,b) =>  

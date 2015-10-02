@@ -41,6 +41,10 @@ libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
      deps :+ compilerPlugin("org.scala-lang.plugins" % "scala-continuations-plugin" % contVersion cross CrossVersion.full)
 }
 
+//fork := true
+//connectInput := true
+//outputStrategy := Some(StdoutOutput)
+
 scalacOptions += "-P:continuations:enable"
 
 val paradiseVersion = "2.0.1"

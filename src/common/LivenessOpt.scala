@@ -1,8 +1,8 @@
-package scala.virtualization.lms
+package scala.lms
 package common
 
 import java.io.PrintWriter
-import scala.virtualization.lms.internal.NestedBlockTraversal
+import scala.lms.internal.NestedBlockTraversal
 
 import scala.collection.mutable
 
@@ -60,7 +60,6 @@ trait DefUseAnalysis extends NestedBlockTraversal {
   override def focusBlock[A](result: Block[Any])(body: => A): A = {
     super.focusBlock(result) {
       val saveDefUseMap = defUseMap
-      defUseMap 
     
       printlog("gathering def-use info for block " + result)
       

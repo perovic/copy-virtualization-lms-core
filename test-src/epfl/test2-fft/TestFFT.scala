@@ -1,18 +1,18 @@
-package scala.virtualization.lms
+package scala.lms
 package epfl
 package test2
 
 import common._
 import test1._
 import org.scala_lang.virtualized.SourceContext
+import org.scala_lang.virtualized.virtualize
 
 import java.io.PrintWriter
 
 import org.scalatest._
 
+trait FFT extends Arith { this: Trig =>
 
-trait FFT { this: Arith with Trig =>
-  
   def omega(k: Int, N: Int): Complex = {
     val kth = -2.0 * k * math.Pi / N
     Complex(cos(kth), sin(kth))
@@ -53,14 +53,9 @@ trait FFT { this: Arith with Trig =>
       } unzip;
       even2 ::: odd2
   }
-
 }
 
-
-
-
-
-trait ArithExpOptFFT extends ArithExpOpt {
+trait ArithOpsExpOptFFT extends ArithExpOpt {
 
   override def infix_+(x: Exp[Double], y: Exp[Double])(implicit pos: SourceContext) = (x, y) match {
     case (x, Def(Minus(Const(0.0) | Const(-0.0), y))) => infix_-(x, y)
@@ -79,8 +74,6 @@ trait ArithExpOptFFT extends ArithExpOpt {
   }
 }
 
-
-
 trait TrigExpOptFFT extends TrigExpOpt {
   override def cos(x: Exp[Double]) = x match {
     case Const(x) if { val z = x / math.Pi / 0.5; z != 0 && z == z.toInt } => Const(0.0)
@@ -88,42 +81,39 @@ trait TrigExpOptFFT extends TrigExpOpt {
   }
 }
 
-
 trait FlatResult extends BaseExp { // just to make dot output nicer
 
-  case class Result(x: Any) extends Def[Any]
-  
-  def result(x: Any): Exp[Any] = toAtom(Result(x))
-  
+  case class Result[T](x: Any) extends Def[T]
+
+  def result[T:Typ](x: Any): Exp[T] = toAtom(Result[T](x))
 }
 
 trait ScalaGenFlat extends ScalaGenBase {
    import IR._
    type Block[+T] = Exp[T]
    def getBlockResultFull[T](x: Block[T]): Exp[T] = x
-   def reifyBlock[T:Manifest](x: =>Exp[T]): Block[T] = x
+   def reifyBlock[T:Typ](x: =>Exp[T]): Block[T] = x
    def traverseBlock[A](block: Block[A]): Unit = {
      buildScheduleForResult(block) foreach traverseStm
    }
 }
 
-
-
 class TestFFT extends FileDiffSuite {
-  
+
   val prefix = home + "test-out/epfl/test2-"
-  
+
   def testFFT1 = {
     withOutFile(prefix+"fft1") {
-      val o = new FFT with ArithExp with TrigExpOpt with FlatResult with DisableCSE //with DisableDCE
+      //val o = new FFT with ArithExp with TrigExpOpt with FlatResult with DisableCSE //with DisableDCE
+      val o = new FFT with TrigExpOpt with FlatResult with DisableCSE with VariablesExp with ArithExp //with DisableDCE
       import o._
 
-      val r = fft(List.tabulate(4)(_ => Complex(fresh, fresh)))
+      val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
       println(globalDefs.mkString("\n"))
       println(r)
-      
+
       val p = new ExportGraph with DisableDCE { val IR: o.type = o }
-      p.emitDepGraph(result(r), prefix+"fft1-dot", true)
+      p.emitDepGraph(result[Unit](r), prefix+"fft1-dot", true)
     }
     assertFileEqualsCheck(prefix+"fft1")
     assertFileEqualsCheck(prefix+"fft1-dot")
@@ -131,17 +121,16 @@ class TestFFT extends FileDiffSuite {
 
   def testFFT2 = {
     withOutFile(prefix+"fft2") {
-      val o = new FFT with ArithExpOptFFT with TrigExpOptFFT with FlatResult
+      //val o = new FFT with ArithExpOptFFT with TrigExpOptFFT with FlatResult
+      val o = new FFT with ArithOpsExpOptFFT with TrigExpOptFFT with FlatResult //with VariablesExpOpt with
       import o._
 
-      case class Result(x: Any) extends Exp[Any]
-      
-      val r = fft(List.tabulate(4)(_ => Complex(fresh, fresh)))
+      val r = fft(List.tabulate(4)(_ => Complex(fresh[Double], fresh[Double])))
       println(globalDefs.mkString("\n"))
       println(r)
 
       val p = new ExportGraph { val IR: o.type = o }
-      p.emitDepGraph(result(r), prefix+"fft2-dot", true)
+      p.emitDepGraph(result[Unit](r), prefix+"fft2-dot", true)
     }
     assertFileEqualsCheck(prefix+"fft2")
     assertFileEqualsCheck(prefix+"fft2-dot")
@@ -149,9 +138,9 @@ class TestFFT extends FileDiffSuite {
 
   def testFFT3 = {
     withOutFile(prefix+"fft3") {
-      class FooBar extends FFT
-        with ArithExpOptFFT with TrigExpOptFFT with ArraysExp
-        with CompileScala {
+      trait caca extends FFT with ArithOpsExpOptFFT with TrigExpOptFFT with ArraysExp with CompileScala
+      class FooBar extends FFT with ArithOpsExpOptFFT with TrigExpOptFFT with ArraysExp with CompileScala {
+
 
         def ffts(input: Rep[Array[Double]], size: Int) = {
           val list = List.tabulate(size)(i => Complex(input(2*i), input(2*i+1)))
@@ -159,12 +148,14 @@ class TestFFT extends FileDiffSuite {
           // make a new array for now - doing in-place update would be better
           makeArray(r.flatMap { case Complex(re,im) => List(re,im) })
         }
-        
-        val codegen = new ScalaGenFlat with ScalaGenArith with ScalaGenArrays { val IR: FooBar.this.type = FooBar.this } // TODO: find a better way...
+
+        val codegen = new ScalaGenFlat with ScalaGenArith with ScalaGenArrays{
+          val IR: FooBar.this.type = FooBar.this // TODO: find a better way...
+        }
       }
       val o = new FooBar
       import o._
-    
+
       val fft4 = (input: Rep[Array[Double]]) => ffts(input, 4)
       codegen.emitSource(fft4, "FFT4", new PrintWriter(System.out))
       val fft4c = compile(fft4)
@@ -172,5 +163,4 @@ class TestFFT extends FileDiffSuite {
     }
     assertFileEqualsCheck(prefix+"fft3")
   }
-  
 }

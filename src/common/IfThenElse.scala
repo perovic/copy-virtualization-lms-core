@@ -1,12 +1,12 @@
-package scala.virtualization.lms
+package scala.lms
 package common
 
 import java.io.PrintWriter
 import org.scala_lang.virtualized.SourceContext
-import scala.virtualization.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFailedException}
+import scala.lms.internal.{GenericNestedCodegen, GenericFatCodegen, GenerationFailedException}
 
 trait IfThenElse extends Base {
-  def __ifThenElse[T:Manifest](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext): Rep[T]
+  def __ifThenElse[T:Typ](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext): Rep[T]
 
   /* NOTE(trans): this hack might not be necessary anymore...
   // HACK -- bug in scala-virtualized
@@ -22,9 +22,9 @@ trait IfThenElse extends Base {
 
 trait IfThenElsePureExp extends IfThenElse with BaseExp {
 
-  case class IfThenElse[T:Manifest](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T]) extends Def[T]
+  case class IfThenElse[T:Typ](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T]) extends Def[T]
 
-  def __ifThenElse[T:Manifest](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext) = IfThenElse(cond, thenp, elsep)
+  def __ifThenElse[T:Typ](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext) = IfThenElse(cond, thenp, elsep)
 }
 
 
@@ -36,16 +36,16 @@ trait IfThenElseExp extends IfThenElse with EffectExp {
     val elsep: Block[T]
   }
   
-  case class IfThenElse[T:Manifest](cond: Exp[Boolean], thenp: Block[T], elsep: Block[T]) extends AbstractIfThenElse[T]
+  case class IfThenElse[T:Typ](cond: Exp[Boolean], thenp: Block[T], elsep: Block[T]) extends AbstractIfThenElse[T]
 
-  override def __ifThenElse[T:Manifest](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext) = {
+  override def __ifThenElse[T:Typ](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext) = {
     val a = reifyEffectsHere(thenp)
     val b = reifyEffectsHere(elsep)
 
     ifThenElse(cond,a,b)
   }
 
-  def ifThenElse[T:Manifest](cond: Rep[Boolean], thenp: Block[T], elsep: Block[T])(implicit pos: SourceContext) = {
+  def ifThenElse[T:Typ](cond: Rep[Boolean], thenp: Block[T], elsep: Block[T])(implicit pos: SourceContext) = {
     val ae = summarizeEffects(thenp)
     val be = summarizeEffects(elsep)
     
@@ -59,12 +59,12 @@ trait IfThenElseExp extends IfThenElse with EffectExp {
     reflectEffectInternal(IfThenElse(cond,thenp,elsep), ae orElse be)
   }
   
-  override def mirrorDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = e match {
+  override def mirrorDef[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = e match {
     case IfThenElse(c,a,b) => IfThenElse(f(c),f(a),f(b))
     case _ => super.mirrorDef(e,f)
   }
   
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
     case Reflect(IfThenElse(c,a,b), u, es) => 
       if (f.hasContext)
         __ifThenElse(f(c),f.reflectBlock(a),f.reflectBlock(b))
@@ -79,7 +79,7 @@ trait IfThenElseExp extends IfThenElse with EffectExp {
   }
 
 /*
-  override def mirror[A:Manifest](e: Def[A], f: Transformer): Exp[A] = e match {
+  override def mirror[A:Typ](e: Def[A], f: Transformer): Exp[A] = e match {
     case Reflect(IfThenElse(c,a,b), u, es) => mirror(IfThenElse(c,a,b)) // discard reflect
     case IfThenElse(c,a,b) => ifThenElse(f(c),f(a),f(b)) // f.apply[A](a: Block[A]): Exp[A] mirrors the block into the current context
     case _ => super.mirror(e,f)
@@ -192,11 +192,11 @@ trait IfThenElseExpOpt extends IfThenElseExp { this: BooleanOpsExp with EqualExp
   // 'de-reify' blocks in case we rewrite if(true) to thenp. 
   // TODO: make reflect(Reify(..)) do the right thing
   
-  override def __ifThenElse[T:Manifest](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext) = cond match {
+  override def __ifThenElse[T:Typ](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T])(implicit pos: SourceContext) = cond match {
     case Const(true) => thenp
     case Const(false) => elsep
     case Def(BooleanNegate(a)) => __ifThenElse(a, elsep, thenp)
-    case Def(NotEqual(a,b)) => __ifThenElse(equals(a,b), elsep, thenp)
+    case Def(e@NotEqual(a,b)) => __ifThenElse(equals(a,b)(e.mA,e.mB,pos), elsep, thenp)
     case _ =>
       super.__ifThenElse(cond, thenp, elsep)
   }
@@ -386,17 +386,28 @@ trait CGenIfThenElse extends CGenEffect with BaseGenIfThenElse {
             emitBlock(b)
             stream.println("}")
           case _ =>
-            if (isPrimitiveType(sym.tp))
+            if (cppIfElseAutoRet == "true") {
+              val ten = quote(sym) + "True"
+              val fen = quote(sym) + "False"
+              def emitCondFun[T](fname: String, block: Block[T]) {
+                stream.println("auto " + fname + " = [&]() {");
+                emitBlock(block)
+                stream.println("return " + quote(getBlockResult(block)) + ";")
+                stream.println("};")
+              }
+              emitCondFun(ten, a)
+              emitCondFun(fen, b) 
+              stream.println("auto " + quote(sym) + " = " + quote(c) + " ? " + ten + "() : " + fen + "();")
+            } else {
               stream.println("%s %s;".format(remap(sym.tp),quote(sym)))
-            else
-              stream.println("%s *%s;".format(remap(sym.tp),quote(sym)))
-            stream.println("if (" + quote(c) + ") {")
-            emitBlock(a)
-            stream.println("%s = %s;".format(quote(sym),quote(getBlockResult(a))))
-            stream.println("} else {")
-            emitBlock(b)
-            stream.println("%s = %s;".format(quote(sym),quote(getBlockResult(b))))
-            stream.println("}")
+              stream.println("if (" + quote(c) + ") {")
+              emitBlock(a)
+              stream.println("%s = %s;".format(quote(sym),quote(getBlockResult(a))))
+              stream.println("} else {")
+              emitBlock(b)
+              stream.println("%s = %s;".format(quote(sym),quote(getBlockResult(b))))
+              stream.println("}")
+            }
         }
         /*
         val booll = remap(sym.tp).equals("void")

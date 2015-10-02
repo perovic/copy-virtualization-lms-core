@@ -1,4 +1,4 @@
-package scala.virtualization.lms
+package scala.lms
 package internal
 
 import java.io.{FileWriter, StringWriter, PrintWriter, File}
@@ -36,9 +36,9 @@ trait OpenCLCodegen extends GPUCodegen with CppHostTransfer with OpenCLDeviceTra
     super.initializeGenerator(buildDir, args)
   }
 
-  def emitSource[A : Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
+  def emitSource[A : Typ](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
 
-    val sB = manifest[A].toString
+    val sB = typ[A].toString
 
     withStream(out) {
       stream.println("/*****************************************\n"+
