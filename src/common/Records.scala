@@ -155,10 +155,10 @@ implicit def ev[T <: Record]: RecordEvidence[T] = new RecordEvidence[T]{}
 implicit def __$materializeManifest[T <: Record](implicit ev: RecordEvidence[T]): Manifest[T] =
    macro RecordMacros.materializeManifest[T]
 
-def __$newRecord[T: Manifest](v: (String, Rep[Any])*): Rep[T] =
+def __$newRecord[T: Typ](v: (String, Rep[Any])*): Rep[T] =
    record_new[T](v.toSeq.map(v => (v._1, false, (_: Rep[T]) => v._2)))
-def __$structField[T: Manifest](rec: Rep[Record], field: String): Rep[T] =
-   record_select(rec, field)
+def __$structField[T: Typ](rec: Rep[Record], field: String): Rep[T] =
+   record_select(rec, field)(recordTyp)
 
 trait RecordAccessor[From, To] {
    def apply(v: From): To
