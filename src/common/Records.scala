@@ -5,6 +5,7 @@ import scala.language.experimental.macros
 import scala.language.dynamics
 
 import scala.reflect.macros.whitebox.Context
+import scala.lms.internal.Expressions
 
 import org.scala_lang.virtualized.SourceContext
 import org.scala_lang.virtualized.Struct
@@ -74,7 +75,7 @@ class RecordMacros(val c: Context) {
      val tpTree = tq"Record { ..$vals }"
      c.Expr(q"""
        __$$newRecord[$tpTree](..${tuples.map(x => q"(${x._1}, ${x._2})")})(
-           ${refinedManifest(schema)}.asInstanceOf[Manifest[$tpTree]])
+           ${refinedTyp(schema)}.asInstanceOf[Typ[$tpTree]])
      """)
    }
 
@@ -86,7 +87,7 @@ class RecordMacros(val c: Context) {
      val dstMembers = srcMembers.map {x => q"""
        def ${x.name}: Rep[${x.returnType}] =
          __$$structField[${x.returnType}](rec,${x.name.toString})(
-           ${tpeManifest(x.returnType)}.asInstanceOf[Manifest[${x.returnType}]])
+           ${tpeTyp(x.returnType)}.asInstanceOf[Typ[${x.returnType}]])
      """}
 
      q"""new RecordAccessor[Rep[${weakTypeOf[A]}],{..$dstTpeMembers}]{
@@ -98,7 +99,7 @@ class RecordMacros(val c: Context) {
 
    def materializeManifest[A <: Record : c.WeakTypeTag](ev: Tree): Tree ={
      val tp = c.weakTypeTag[A].tpe
-     q"${refinedManifest(recordTypes(tp))}.asInstanceOf[Manifest[$tp]]"
+     q"${refinedTyp(recordTypes(tp))}.asInstanceOf[Typ[$tp]]"
    }
 
 
@@ -121,12 +122,23 @@ class RecordMacros(val c: Context) {
    private def tpeManifest(tpe: Type): Tree =
      if(tpe <:< typeOf[Record]) refinedManifest(recordTypes(tpe)) else q"manifest[$tpe]"
 
+   private def tpeTyp(tpe: Type): Tree = {
+     val m =
+       tpeManifest(tpe)
+     q"ManifestTyp($m)"
+   }
+
    private def refinedManifest(schema: Seq[(String, Type)]): Tree = q"""
      new _root_.org.scala_lang.virtualized.RefinedManifest[Record] {
        val fields = _root_.scala.List(..${schema.map(v => q"(${v._1}, ${tpeManifest(v._2)})")})
        def runtimeClass: Class[_] = classOf[Record]
      }
    """
+  private def refinedTyp(schema: Seq[(String, Type)]): Tree = {
+    val rm =
+      refinedManifest(schema)
+    q"ManifestTyp($rm)"
+  }
 }
 
 trait RecordOps extends StructOps {

@@ -6,7 +6,6 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable.ListBuffer
 import java.lang.{StackTraceElement,Thread}
 
-
 /**
  * The Expressions trait houses common AST nodes. It also manages a list of encountered Definitions which
  * allows for common sub-expression elimination (CSE).  

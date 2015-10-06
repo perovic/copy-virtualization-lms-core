@@ -10,22 +10,37 @@ import org.scala_lang.virtualized.SourceContext
 import org.scala_lang.virtualized.Struct
 import scala.lms.common._
 
+//@virtualize
+//trait SuperBasicProg extends TestExp {
+////  def typp[T:Typ]: Typ[T] = implicitly[Typ[Const[String]]]
+////  val cac = typ[Const[String]]
+////  val b = unit("a")
+////  val a: Typ[Rep[String]] = typ[b]
+////  implicit val tcs:Typ[Const[String]] = manifest(unit("a"))
+//  //implicit val stringRepTyp: Typ[Const[String]] = typ[Const[String]]
+//  def f(): Rep[String] = {
+//    val res = Record(name = unit("fads"))
+//    res.name
+//  }
+//}
+
 @virtualize
 trait BasicProg extends TestOps {
+
   def f(s: Rep[String]): Rep[String] = {
-    val res = Record(name = s, lastName = s)
+    val res = Record(name = s)//, lastName = s)
     res.lastName
   }
 }
 
-@virtualize
-trait NestedProg extends TestOps {
-  def f(s: Rep[String]): Rep[String] = {
-    val res = Record(name = s, lastName = Record(fathers = s, last = s))
-
-    res.lastName.fathers
-  }
-}
+//@virtualize
+//trait NestedProg extends TestOps {
+//  def f(s: Rep[String]): Rep[String] = {
+//    val res = Record(name = s, lastName = Record(fathers = s, last = s))
+//
+//    res.lastName.fathers
+//  }
+//}
 
 //@virtualize
 //trait AsArgumentsProg extends TestOps {
@@ -54,11 +69,11 @@ trait NestedProg extends TestOps {
 //}
 
 
-trait TestOps extends Functions with Equal with IfThenElse with StructOps with BooleanOps with RecordOps
-trait TestExp extends FunctionsExp with EqualExp with IfThenElseExp with StructExp with BooleanOpsExp //with RecordOpsExp
+trait TestOps extends Functions with Equal with IfThenElse with StructOps with BooleanOps with StringOps with RecordOps
+trait TestExp extends TestOps with FunctionsExp with EqualExp with IfThenElseExp with StructExp with BooleanOpsExp with StringOpsExp //with RecordOpsExp
 trait TestGen extends ScalaGenFunctions with ScalaGenEqual with ScalaGenIfThenElse with ScalaGenStruct {val IR: TestExp}
 
-class TestBasic extends FileDiffSuite {
+class TestRecords extends FileDiffSuite {
 
   val prefix = home + "test-out/common/records-"
 
