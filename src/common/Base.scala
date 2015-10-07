@@ -18,6 +18,7 @@ trait LiftAll extends Base {
  *
  * @since 0.1 
  */
+
 trait Base extends EmbeddedControls {
   type API <: Base
 

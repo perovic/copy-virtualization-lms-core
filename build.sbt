@@ -47,6 +47,8 @@ libraryDependencies <<= (scalaVersion, libraryDependencies) { (ver, deps) =>
 
 scalacOptions += "-P:continuations:enable"
 
+// -Ymacro-debug-lite or -Ymacro-debug-verbose
+
 val paradiseVersion = "2.0.1"
 
 libraryDependencies ++= (
