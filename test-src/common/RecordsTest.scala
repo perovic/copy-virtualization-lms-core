@@ -29,7 +29,7 @@ trait BasicProg extends TestOps {
 
   def f(s: Rep[String]): Rep[String] = {
     val res = Record(name = s)//, lastName = s)
-    res.lastName
+    res.name
   }
 }
 

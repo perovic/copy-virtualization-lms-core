@@ -13,7 +13,7 @@ import org.scala_lang.virtualized.RefinedManifest
 
 import util.OverloadHack
 
-class RecordMacros(val c: Context) {
+class RecordMacros(val c: Context) extends BaseTyp {
    import c.universe._
    def apply_impl[Rep: c.WeakTypeTag](method: c.Expr[String])(v: c.Expr[(String, Any)]*): c.Expr[Any] = {
      method.tree match {
@@ -125,7 +125,9 @@ class RecordMacros(val c: Context) {
    private def tpeTyp(tpe: Type): Tree = {
      val m =
        tpeManifest(tpe)
-     q"ManifestTyp($m)"
+     val ret = q"manifestTypTyp($m)"
+//     println(ret)
+     ret
    }
 
    private def refinedManifest(schema: Seq[(String, Type)]): Tree = q"""
@@ -134,10 +136,18 @@ class RecordMacros(val c: Context) {
        def runtimeClass: Class[_] = classOf[Record]
      }
    """
+
+//  private def refinedManifest(schema: Seq[(String, Type)]): Tree = q"""
+//      createRefinedManifest[Record] (classOf[Record], _root_.scala.List(..${schema.map(v => q"(${v._1}, ${tpeTyp(v._2)})")})
+//      }
+//    """
+
   private def refinedTyp(schema: Seq[(String, Type)]): Tree = {
     val rm =
       refinedManifest(schema)
-    q"ManifestTyp($rm)"
+    val ret = q"manifestTypTyp($rm)"
+//    println(ret)
+    ret
   }
 }
 

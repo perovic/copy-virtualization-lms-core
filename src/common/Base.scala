@@ -18,11 +18,19 @@ trait LiftAll extends Base {
  *
  * @since 0.1 
  */
-trait Base extends EmbeddedControls {
+
+trait BaseTyp {
+  type Typ[T]
+  //hacky!!
+  def manifestTypTyp[T](mf: Manifest[T]): Typ[T] = ??? //very hacky with unimplemented implementation!
+  //def manifestTyp[T: Manifest]: Typ[T] = ???
+}
+
+trait Base extends EmbeddedControls with BaseTyp {
   type API <: Base
 
   type Rep[+T]
-  type Typ[T]
+  //type Typ[T]
 
   protected def unit[T:Typ](x: T): Rep[T]
 
@@ -45,7 +53,9 @@ trait BaseExp extends Base with Expressions with Blocks with Transforming {
   type Rep[+T] = Exp[T]
   //type Typ[T] = TypeExp[T] defined in Expressions
   protected def manifest[T:Typ] = implicitly[Typ[T]] // TODO: change
-  protected def manifestTyp[T:Manifest]: Typ[T] = ManifestTyp(implicitly) //TODO(trans): does this work for RefinedManifest as well?
+  //implicit def findManifest[A <% Manifest](x: A): Manifest = x
+  protected def manifestTyp[T: Manifest]: Typ[T] = ManifestTyp(implicitly) //TODO(trans): does this work for RefinedManifest as well?
+  override def manifestTypTyp[T](mf: Manifest[T]) = ManifestTyp(mf)
 
   implicit def unitTyp: Typ[Unit] = manifestTyp
   implicit def nullTyp: Typ[Null] = manifestTyp
