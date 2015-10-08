@@ -19,21 +19,26 @@ trait LiftAll extends Base {
  * @since 0.1 
  */
 
-trait Base extends EmbeddedControls {
+trait RepFactory {
+  type Typ[T]
+}
+
+trait Base extends EmbeddedControls with RepFactory {
   type API <: Base
 
   type Rep[+T]
-  type Typ[T]
 
-  protected def unit[T:Typ](x: T): Rep[T]
+  protected def unit[T: Typ](x: T): Rep[T]
 
   implicit def unitTyp: Typ[Unit]
+
   implicit def nullTyp: Typ[Null]
 
-  def typ[T:Typ]: Typ[T]
+  def typ[T: Typ]: Typ[T]
 
   // always lift Unit and Null (for now)
   implicit def unitToRepUnit(x: Unit) = unit(x)
+
   implicit def nullToRepNull(x: Null) = unit(x)
 }
 
