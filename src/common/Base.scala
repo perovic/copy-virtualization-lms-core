@@ -16,7 +16,9 @@ trait LiftAll extends Base {
 trait TypOps {
   type Typ[T]
   def typ[T:Typ]: Typ[T]
-  def typWrap[M[_],T](t:M[T]): Typ[T] //= ??? //very hacky with unimplemented implementation!
+  //implicit def mToT[T](m: Manifest[T]): Typ[T] = typWrap(m)
+  //implicit def tToM[T](t: Typ[T]): Manifest[T] =
+  def typWrap[M[_],T](t:M[T]): Typ[T]
 }
 
 trait TypExp extends TypOps {
