@@ -22,7 +22,7 @@ trait Power2 { this: Arith =>
 }
 
 
-trait BaseStr extends Base {
+trait BaseStr extends Base with TypExp {
    type Rep[+T] = String
    //todo added this to provide required unit implicit conversion
    implicit def unit[T:Typ](x: T): Rep[T] = x.toString

@@ -12,32 +12,63 @@ trait LiftAll extends Base {
   protected implicit def __unit[T:Typ](x: T) = unit(x)
 }
 
+//factor out the typ related thing so we don't need to deal with all other abstract member in places we don't need to
+trait TypOps {
+  type Typ[T]
+  def typ[T:Typ]: Typ[T]
+  def typWrap[M[_],T](t:M[T]): Typ[T] //= ??? //very hacky with unimplemented implementation!
+}
+
+trait TypExp extends TypOps {
+  abstract class Typ[T] {
+    def typeArguments: List[Typ[_]]
+    def arrayTyp: Typ[Array[T]]
+    def runtimeClass: java.lang.Class[_]
+    def <:<(that: Typ[_]): Boolean
+    def erasure: java.lang.Class[_]
+  }
+
+  case class ManifestTyp[T](mf: Manifest[T]) extends Typ[T] {
+    def typeArguments: List[Typ[_]]   = mf.typeArguments.map(ManifestTyp(_))
+    def arrayTyp: Typ[Array[T]] = ManifestTyp(mf.arrayManifest)
+    def runtimeClass: java.lang.Class[_] = mf.runtimeClass
+    def <:<(that: Typ[_]): Boolean = that match {
+      case ManifestTyp(mf1) => mf.<:<(mf1)
+      case _ => false
+    }
+    def erasure: java.lang.Class[_] = mf.erasure
+    //override def canEqual(that: Any): Boolean = mf.canEqual(that) // TEMP
+    //override def equals(that: Any): Boolean = mf.equals(that) // TEMP
+    //override def hashCode = mf.hashCode
+    override def toString = mf.toString
+  }
+
+  def typ[T:Typ]: Typ[T] = implicitly[Typ[T]]
+
+  override def typWrap[M[_], T](mf: M[T]):Typ[T] = mf match {
+    case m:Manifest[T] => ManifestTyp(m)
+    case _ => ???
+  }
+}
+
 /**
  * The Base trait defines the type constructor Rep, which is the higher-kinded type that allows for other DSL types to be
  * polymorphically embedded.
  *
- * @since 0.1 
+ * @since 0.1
  */
-
-trait BaseTyp {
-  type Typ[T]
-  //hacky!!
-  def manifestTypTyp[T](mf: Manifest[T]): Typ[T] = ??? //very hacky with unimplemented implementation!
-  //def manifestTyp[T: Manifest]: Typ[T] = ???
-}
-
-trait Base extends EmbeddedControls with BaseTyp {
+trait Base extends EmbeddedControls with TypOps {
   type API <: Base
 
   type Rep[+T]
-  //type Typ[T]
+  //type Typ[T] //old Typ
 
   protected def unit[T:Typ](x: T): Rep[T]
 
   implicit def unitTyp: Typ[Unit]
   implicit def nullTyp: Typ[Null]
 
-  def typ[T:Typ]: Typ[T]
+  //def typ[T:Typ]: Typ[T]
 
   // always lift Unit and Null (for now)
   implicit def unitToRepUnit(x: Unit) = unit(x)
@@ -55,7 +86,7 @@ trait BaseExp extends Base with Expressions with Blocks with Transforming {
   protected def manifest[T:Typ] = implicitly[Typ[T]] // TODO: change
   //implicit def findManifest[A <% Manifest](x: A): Manifest = x
   protected def manifestTyp[T: Manifest]: Typ[T] = ManifestTyp(implicitly) //TODO(trans): does this work for RefinedManifest as well?
-  override def manifestTypTyp[T](mf: Manifest[T]) = ManifestTyp(mf)
+  //protected def typWrap[T](mf: Manifest[T]) = ManifestTyp(mf)
 
   implicit def unitTyp: Typ[Unit] = manifestTyp
   implicit def nullTyp: Typ[Null] = manifestTyp

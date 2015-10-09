@@ -13,7 +13,7 @@ import org.scala_lang.virtualized.RefinedManifest
 
 import util.OverloadHack
 
-class RecordMacros(val c: Context) extends BaseTyp {
+class RecordMacros(val c: Context) extends TypExp {
    import c.universe._
    def apply_impl[Rep: c.WeakTypeTag](method: c.Expr[String])(v: c.Expr[(String, Any)]*): c.Expr[Any] = {
      method.tree match {
@@ -125,7 +125,7 @@ class RecordMacros(val c: Context) extends BaseTyp {
    private def tpeTyp(tpe: Type): Tree = {
      val m =
        tpeManifest(tpe)
-     val ret = q"manifestTypTyp($m)"
+     val ret = q"typWrap($m)"
 //     println(ret)
      ret
    }
@@ -145,7 +145,7 @@ class RecordMacros(val c: Context) extends BaseTyp {
   private def refinedTyp(schema: Seq[(String, Type)]): Tree = {
     val rm =
       refinedManifest(schema)
-    val ret = q"manifestTypTyp($rm)"
+    val ret = q"typWrap($rm)"
 //    println(ret)
     ret
   }

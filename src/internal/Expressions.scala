@@ -12,32 +12,7 @@ import java.lang.{StackTraceElement,Thread}
  * 
  * @since 0.1
  */
-trait Expressions extends Utils {
-
-  abstract class Typ[T] {
-    def typeArguments: List[Typ[_]]
-    def arrayTyp: Typ[Array[T]]
-    def runtimeClass: java.lang.Class[_]
-    def <:<(that: Typ[_]): Boolean
-    def erasure: java.lang.Class[_]
-  }
-
-  case class ManifestTyp[T](mf: Manifest[T]) extends Typ[T] {
-    def typeArguments: List[Typ[_]]   = mf.typeArguments.map(ManifestTyp(_))
-    def arrayTyp: Typ[Array[T]] = ManifestTyp(mf.arrayManifest)
-    def runtimeClass: java.lang.Class[_] = mf.runtimeClass
-    def <:<(that: Typ[_]): Boolean = that match { 
-      case ManifestTyp(mf1) => mf.<:<(mf1) 
-      case _ => false 
-    }
-    def erasure: java.lang.Class[_] = mf.erasure
-    //override def canEqual(that: Any): Boolean = mf.canEqual(that) // TEMP
-    //override def equals(that: Any): Boolean = mf.equals(that) // TEMP
-    //override def hashCode = mf.hashCode
-    override def toString = mf.toString
-  }
-
-  def typ[T:Typ]: Typ[T] = implicitly[Typ[T]]
+trait Expressions extends Utils with common.TypExp {
 
   def simpleClassTyp[C](c: Class[C]): Typ[C] =
     ManifestTyp(scala.reflect.ManifestFactory.classType(c))
