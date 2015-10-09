@@ -1,6 +1,6 @@
 name := "macro-LMS"
 
-version := "0.3-SNAPSHOT"
+version := "macro-trans-records-0.3-SNAPSHOT"
 
 organization := "EPFL"
 
