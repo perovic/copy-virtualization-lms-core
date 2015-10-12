@@ -16,9 +16,9 @@ trait LiftAll extends Base {
 trait TypOps {
   type Typ[T]
   def typ[T:Typ]: Typ[T]
-  //implicit def mToT[T](m: Manifest[T]): Typ[T] = typWrap(m)
-  //implicit def tToM[T](t: Typ[T]): Manifest[T] =
-  def typWrap[M[_],T](t:M[T]): Typ[T]
+  //protected def manifest[T:Typ]: Typ[T]
+  protected def manifestTyp[T: Manifest]: Typ[T]
+  def typWrap[T,M[_]](t:M[T]): Typ[T] //some kind of typ materialization should always be provided in the expressions
 }
 
 trait TypExp extends TypOps {
@@ -46,10 +46,12 @@ trait TypExp extends TypOps {
   }
 
   def typ[T:Typ]: Typ[T] = implicitly[Typ[T]]
+  //def manifest[T:Typ] = implicitly[Typ[T]] //protected
+  protected def manifestTyp[T: Manifest]: Typ[T] = ManifestTyp(implicitly)
 
-  override def typWrap[M[_], T](mf: M[T]):Typ[T] = mf match {
+  def typWrap[T,M[_]](mf: M[T]):Typ[T] = mf match {
     case m:Manifest[T] => ManifestTyp(m)
-    case _ => ???
+    case _ => ??? //TODO(trans)
   }
 }
 
@@ -84,11 +86,8 @@ trait Base extends EmbeddedControls with TypOps {
  */
 trait BaseExp extends Base with Expressions with Blocks with Transforming {
   type Rep[+T] = Exp[T]
-  //type Typ[T] = TypeExp[T] defined in Expressions
-  protected def manifest[T:Typ] = implicitly[Typ[T]] // TODO: change
-  //implicit def findManifest[A <% Manifest](x: A): Manifest = x
-  protected def manifestTyp[T: Manifest]: Typ[T] = ManifestTyp(implicitly) //TODO(trans): does this work for RefinedManifest as well?
-  //protected def typWrap[T](mf: Manifest[T]) = ManifestTyp(mf)
+
+  protected def manifest[T:Typ] = implicitly[Typ[T]]
 
   implicit def unitTyp: Typ[Unit] = manifestTyp
   implicit def nullTyp: Typ[Null] = manifestTyp
@@ -114,7 +113,7 @@ trait EffectExp extends BaseExp with Effects {
 
   override def mirror[A:Typ](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
     case Reflect(x, u, es) => reflectMirrored(mirrorDef(e,f).asInstanceOf[Reflect[A]])
-    case Reify(x, u, es) => Reify(f(x), mapOver(f,u), f(es))
+    case Reify(x, u, es) => Reify(f(x), mapOver(f,u), f(es)): Exp[A]
     case _ => super.mirror(e,f)
   }
     
