@@ -2,13 +2,14 @@ package scala.lms
 package common
 
 import scala.language.experimental.macros
-import scala.reflect.macros.Universe
-import scala.reflect.macros.blackbox.Context
+//import scala.reflect.macros.Universe
+//import scala.reflect.macros.blackbox.Context
 
 
 
 import org.scala_lang.virtualized.virtualize
 
+@virtualize
 object Scopes extends App { //just for runnign and testing
   println("begin")
   /**
@@ -24,12 +25,23 @@ object Scopes extends App { //just for runnign and testing
    *
    */
 
+  @virtualize
+  trait T {
+
+    val body = {}
+    //def OptiML[R](b: => R) =
+    new Scope[OptiML, OptiMLExp, Unit](body)
+
+  }
+
+  new T {}
   //class Scope[Interface, Implementation, Result](body: => Result)
 
   object Scope {
+
     //def apply[Interface, Implementation, Result](body: => Result) = macro ScopeMacro.impl[Interface, Implementation, Result] //[Interface, Implementation, Result](body: => Result)
     //def apply(arg: Any) = macro ScopeMacro.simpl
-    def apply[MyType](arg: MyType) =  macro ScopeMacro.simplit[MyType]
+    //def apply[MyType](arg: MyType) =  macro ScopeMacro.simplit[MyType]
     //def apply[Interface, Implementation, Result: c.WeakTypeTag](arg: Any) =  macro ScopeMacro.impl[Interface, Implementation, Result]
   }
 
@@ -44,7 +56,7 @@ object Scopes extends App { //just for runnign and testing
 
   //def MyTest[String](a: MyTyp) = Scope(a)
   import scala.reflect.runtime.universe._
-  println(showRaw(Scope("String")))
+//  println(showRaw(Scope("String")))
 //  OptiML {
 //    def a = 5 + "weafsd"
 //  }

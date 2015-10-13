@@ -28,19 +28,19 @@ object ScopeMacro {
     reify(println("macro works"))
   }
 
-  def simplit[MyType: c.WeakTypeTag](c: Context)(arg: c.Expr[MyType]): c.Expr[MyType] = {
-    import c.universe._
-    //c.Expr(Apply(Select(q"9.toString", TermName("$plus"), q"10.toString")))
-    c.TypeTag(weakTypeTag(MyType))
-
-    //reify(println("macro first"))
-    //reify(println("macro works"))
-  }
+//  def simplit[MyType: c.WeakTypeTag](c: Context)(arg: c.Expr[MyType]): c.Expr[MyType] = {
+//    import c.universe._
+//    //c.Expr(Apply(Select(q"9.toString", TermName("$plus"), q"10.toString")))
+//    //c.TypeTag(weakTypeTag(MyType))
+//
+//    //reify(println("macro first"))
+//    //reify(println("macro works"))
+//  }
 
   def impl[Interface, Implementation, Result: c.WeakTypeTag]
   (c: Context)
   (body: c.Tree) = { //c.Expr[ => Result]
-    val name = c.freshName("DSLprog").toTy .toTypeName
+    val name = c.freshName("DSLprog")
     import c.universe._
     //generate trait and instantiation?
     //qprintln("macro works")""".splice
