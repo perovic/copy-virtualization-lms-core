@@ -21,12 +21,12 @@ trait LiftAll extends Base {
 
 trait RepFactory {
   type Typ[T]
+  type Rep[+T]
 }
 
 trait Base extends EmbeddedControls with RepFactory {
   type API <: Base
 
-  type Rep[+T]
 
   protected def unit[T: Typ](x: T): Rep[T]
 

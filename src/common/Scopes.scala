@@ -9,8 +9,10 @@ import scala.language.experimental.macros
 
 import org.scala_lang.virtualized.virtualize
 
+
+//this file is purely for testing purposes
 @virtualize
-object Scopes extends App { //just for runnign and testing
+object Scopes extends App with RepFactory { //just for runnign and testing
   println("begin")
   /**
    * given `def OptiML[R](b: => R) = new Scope[OptiML, OptiMLExp, R](b)`
@@ -21,51 +23,68 @@ object Scopes extends App { //just for runnign and testing
    *    def apply = body
    *  }
    *  (new DSLprog$ with OptiMLExp): OptiML with OptiMLExp
-   *
-   *
    */
 
-  @virtualize
-  trait T {
+  import scala.reflect.runtime.universe._ //for showCode and showRaw
 
-    val body = {}
-    //def OptiML[R](b: => R) =
-    new Scope[OptiML, OptiMLExp, Unit](body)
+  trait OptiML {
+    def i:Int
+  }
+  trait OptiMLExp extends OptiML {
+    def i = 9
+  }
+  case class Result(s:String)
 
+  trait OptiMLR
+
+  object DslSnippet {
+    def apply[R](block: => R) = new Scope[OptiML, OptiMLExp, R](block) //OptiMLExp[R]
   }
 
-  new T {}
-  //class Scope[Interface, Implementation, Result](body: => Result)
+  def OptiML[R](b: => R) = new Scope[OptiML, OptiMLExp, R](b)
 
-  object Scope {
+  def f(block:Int) = new Scope[OptiML, OptiMLExp, R](block)
 
-    //def apply[Interface, Implementation, Result](body: => Result) = macro ScopeMacro.impl[Interface, Implementation, Result] //[Interface, Implementation, Result](body: => Result)
-    //def apply(arg: Any) = macro ScopeMacro.simpl
-    //def apply[MyType](arg: MyType) =  macro ScopeMacro.simplit[MyType]
-    //def apply[Interface, Implementation, Result: c.WeakTypeTag](arg: Any) =  macro ScopeMacro.impl[Interface, Implementation, Result]
+  DslSnippet {println("Hello World!")}
+  DslSnippet { 5+3}
+  DslSnippet { new Result("heyhey")}
+
+//  object SimpleVector {
+//    def apply[R](b: => R) = new Scope[OptiML, OptiMLExp[R], R](b)
+//  }
+
+//  object DeliteSnippet {
+//    def apply[A,B](b: => Unit) = new Scope[A,B,Unit](b)
+//  }
+
+  /* https://github.com /stanford-ppl/Forge/blob/master/src/core/ForgeOps.scala */
+  abstract class DSLGroup
+  abstract class DSLType extends DSLGroup
+  case class C(a:Any) extends DSLType
+
+  trait TpeScope
+  trait TpeScopeRunner[R] extends TpeScope {
+//    def apply: R
+//    val result = apply
+//    _tpeScopeBox = null // reset
+  }
+  //var _tpeScopeBox: Rep[DSLType] = null
+  def withTpe(tpe: Rep[DSLType]) = {
+   // _tpeScopeBox = tpe
+    new ChainTpe(tpe)
+  }
+  class ChainTpe(tpe: Rep[DSLType]) {
+    def apply[R](block: => R) = new Scope[TpeScope, TpeScopeRunner[R], R](block)
   }
 
-
-
-
-  trait OptiML {}
-  trait OptiMLExp {}
-
-  //def OptiML[R](b: => R) = new Scope[OptiML, OptiMLExp, R](b)
-  //def OptiML[R](b: => R) = Scope[OptiML, OptiMLExp, R](b)
-
-  //def MyTest[String](a: MyTyp) = Scope(a)
-  import scala.reflect.runtime.universe._
-//  println(showRaw(Scope("String")))
-//  OptiML {
-//    def a = 5 + "weafsd"
-//  }
-//  trait Inter extends OptiML {
-//    def apply = {
-//      def a = 5 + "weafsd"
-//    }
-//  }
-
-  import ScopeMacro._
-  Main.main(new Array[String](0))
+  /* https://github.com/stanford-ppl/Forge/blob/master/src/dsls/optila/Vector.scala */
+  def addVectorCommonOps(v: Rep[DSLType], T: Rep[DSLType]) {
+    val VectorCommonOps = withTpe(v) //try to avoid the separate instantiation
+    VectorCommonOps {
+      println("2-step")
+    }
+    withTpe(v) {println("1-step")}
+  }
+  case class Rep[+T](t:T)
+  addVectorCommonOps(Rep(C(1)), Rep(C("s")))
 }
