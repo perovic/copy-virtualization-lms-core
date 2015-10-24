@@ -1,5 +1,5 @@
 package scala.lms
-package common
+package common 
 
 import java.io.PrintWriter
 import scala.lms.internal.GenericNestedCodegen
